@@ -4,6 +4,7 @@ if SERVER then
     resource.AddFile("sound/tdmrp/skills/invincibility1.wav")
     resource.AddFile("sound/tdmrp/skills/healingaura1.wav")
     resource.AddFile("sound/tdmrp/skills/speed1.wav")
+    resource.AddFile("sound/tdmrp/skills/regeneration.mp3")
     resource.AddFile("sound/tdmrp/slugsounds/slugshotnew1.wav")
     resource.AddFile("sound/tdmrp/slugsounds/slugshotnew2.wav")
     resource.AddFile("sound/tdmrp/slugsounds/slugshotnew3.wav")

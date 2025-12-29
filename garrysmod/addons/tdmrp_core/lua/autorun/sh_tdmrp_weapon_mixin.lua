@@ -684,14 +684,26 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
                         -- Check if killing blow
                         local willKill = (target:Health() - dmg) <= 0
                         
-                        print("[TDMRP] SENT hit number:", dmg)
+                        -- Check if attacker has quad damage active
+                        local isQuadDamage = false
+                        local displayDamage = dmg
+                        if SERVER and TDMRP.ActiveSkills and TDMRP.ActiveSkills.ActiveBuffs then
+                            local buff = TDMRP.ActiveSkills.ActiveBuffs[attacker]
+                            if buff and buff.skill == "quaddamage" and CurTime() < buff.endTime then
+                                isQuadDamage = true
+                                displayDamage = math.ceil(dmg * 4)  -- Show quad-scaled damage
+                            end
+                        end
+                        
+                        print("[TDMRP] SENT hit number:", displayDamage)
                         
                         -- Send hit number
                         net.Start("TDMRP_HitNumber")
                             net.WriteVector(hitPos)
-                            net.WriteUInt(math.min(math.Round(dmg), 65535), 16)
+                            net.WriteUInt(math.min(math.Round(displayDamage), 65535), 16)
                             net.WriteBool(isHeadshot)
                             net.WriteBool(willKill)
+                            net.WriteBool(isQuadDamage)
                         net.Send(attacker)
                     else
                         print("[TDMRP] BLOCKED (debounce)")

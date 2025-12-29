@@ -93,6 +93,17 @@ TDMRP.ActiveSkills.Skills = {
         material = "phoenix_storms/wire/pcb_green",
         vignetteColor = Color(255, 50, 50, 80), -- Red
         description = "Triple your fire rate"
+    },
+    
+    regeneration = {
+        name = "Regeneration",
+        duration = 20, -- seconds
+        cooldown = 60, -- 60 seconds cooldown
+        sound = "tdmrp/skills/regeneration.mp3",
+        material = "models/props_borealis/borealis_ice_01",
+        vignetteColor = Color(150, 200, 150, 80), -- Light green
+        healAmount = 5, -- HP per second
+        description = "Regenerate 5 HP per second for 20 seconds"
     }
 }
 
@@ -118,7 +129,11 @@ TDMRP.ActiveSkills.JobSkills = {
     
     -- Quad Damage Users
     ["SWAT"] = "quaddamage",
-    ["Gangster"] = "quaddamage"
+    ["Gangster"] = "quaddamage",
+    
+    -- Regeneration Users
+    ["Police Recruit"] = "regeneration",
+    ["Gangster Initiate"] = "regeneration"
 }
 
 ----------------------------------------------------

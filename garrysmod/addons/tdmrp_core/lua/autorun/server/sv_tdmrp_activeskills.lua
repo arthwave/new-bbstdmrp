@@ -316,6 +316,66 @@ local function ActivateBerserk(ply, skillData)
 end
 
 ----------------------------------------------------
+-- Regeneration Skill
+----------------------------------------------------
+local function ActivateRegeneration(ply, skillData)
+    ApplyMaterial(ply, skillData.material, "regeneration")
+    
+    -- Store buff
+    TDMRP.ActiveSkills.ActiveBuffs[ply] = {
+        skill = "regeneration",
+        endTime = CurTime() + skillData.duration
+    }
+    
+    -- Regeneration tick timer (heal every 0.5 seconds, 2 ticks per heal point)
+    local tickCount = 0
+    local maxTicks = skillData.duration * 2  -- 2 ticks per second (0.5s interval)
+    
+    timer.Create("TDMRP_Regen_" .. ply:SteamID(), 0.5, maxTicks, function()
+        if not IsValid(ply) or not ply:Alive() then 
+            timer.Remove("TDMRP_Regen_" .. ply:SteamID())
+            return 
+        end
+        
+        tickCount = tickCount + 1
+        local pos = ply:GetPos()
+        
+        -- Heal player every 2 ticks (every 1 second, heal 5 HP)
+        if tickCount % 2 == 0 then
+            local newHealth = math.min(ply:Health() + skillData.healAmount, ply:GetMaxHealth())
+            ply:SetHealth(newHealth)
+            
+            -- Play healing sound for player and nearby players
+            ply:EmitSound("items/medshot4.wav", 70, 100)
+            
+            -- Also play for nearby players
+            for _, target in ipairs(player.GetAll()) do
+                if target ~= ply and IsValid(target) then
+                    local dist = target:GetPos():Distance(pos)
+                    if dist <= 1000 then  -- Audible range
+                        target:EmitSound("items/medshot4.wav", 70, 100)
+                    end
+                end
+            end
+        end
+        
+        -- Remove buff on last tick
+        if tickCount >= maxTicks then
+            TDMRP.ActiveSkills.ActiveBuffs[ply] = nil
+        end
+    end)
+    
+    -- Remove after duration
+    timer.Simple(skillData.duration, function()
+        if IsValid(ply) then
+            RemoveMaterial(ply)
+            TDMRP.ActiveSkills.ActiveBuffs[ply] = nil
+            timer.Remove("TDMRP_Regen_" .. ply:SteamID())
+        end
+    end)
+end
+
+----------------------------------------------------
 -- Main activation handler
 ----------------------------------------------------
 local function ActivateSkill(ply, skillID)
@@ -336,6 +396,8 @@ local function ActivateSkill(ply, skillID)
         ActivateHealingAura(ply, skillData)
     elseif skillID == "berserk" then
         ActivateBerserk(ply, skillData)
+    elseif skillID == "regeneration" then
+        ActivateRegeneration(ply, skillData)
     end
     
     -- Set cooldown
