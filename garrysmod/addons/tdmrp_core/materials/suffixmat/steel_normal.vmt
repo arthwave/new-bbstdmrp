@@ -1,0 +1,10 @@
+"LightmappedGeneric"
+{
+    "$basetexture" "tdmrp/industrial/steel_diffuse"
+    "$bumpmap" "tdmrp/industrial/steel_normal"
+
+    "$surfaceprop" "metal"
+    "$phong" "1"
+    "$phongboost" "0.3"
+    "$phongexponent" "10"
+}

@@ -1,0 +1,48 @@
+{
+    "!!Config Information!!": "Visit https://physgun.com/physutils to learn how to config this to your needs!",
+    "AntiExploit": {
+        "BanTime": 0,
+        "BanTrigger": false,
+        "BypassNetmessages": [
+            "example"
+        ],
+        "CountChoke": 80,
+        "Enabled": true,
+        "ForceDisableMaterialFix": false,
+        "IVPVoidCollisonSolverPatch": true,
+        "Kicktrigger": true,
+        "LogFails": true,
+        "NetLogger": false,
+        "ResetTime": 1000,
+        "TrainingMode": true
+    },
+    "AsyncConsole": {
+        "Enabled": true,
+        "FilterConsoleOutputRegex": [
+            "CreateFragmentsFromFile: '[^']*' doesn't exist.",
+            "do_constraint_system: Couldn't invert rot matrix!",
+            "CreateFragmentsFromFile: '[^']*' size exceeds net_maxfilesize limit \\((\\d+) MB\\)."
+        ],
+        "LogFile": true
+    },
+    "CrashHandler": {
+        "AtemptToBranchBack": false,
+        "CrashScreen": true,
+        "Enabled": true,
+        "InfiniteLoopDetection": true,
+        "Instance_dont_touch_unless_you_where_told_too": "",
+        "MaxLoopTime": 20,
+        "MaxStackDepth": 1000,
+        "SegfaultDetection": true,
+        "StackOverflowDetection": true
+    },
+    "Optimizations": {
+        "DisableEnginePatches": false,
+        "DisableWidgets": true,
+        "FastThink": true,
+        "MultithreadedNetworking": true
+    },
+    "RestoreRemovedFunctions": {
+        "DebugGetRegistry": false
+    }
+}

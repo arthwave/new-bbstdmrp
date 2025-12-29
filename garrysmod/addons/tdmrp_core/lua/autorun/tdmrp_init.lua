@@ -1,0 +1,1 @@
+print("[TDMRP] Core loaded successfully.")
