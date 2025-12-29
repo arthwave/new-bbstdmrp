@@ -10,7 +10,7 @@ util.AddNetworkString("TDMRP_ChainDamage")
 local lastHitTime = {}
 
 -- Helper to send hit number to attacker
-function TDMRP_SendHitNumber(attacker, target, dmg, pos, isHeadshot, willKill)
+function TDMRP_SendHitNumber(attacker, target, dmg, pos, isHeadshot, willKill, isQuadDamage)
     if not IsValid(attacker) or not attacker:IsPlayer() then return end
     if not IsValid(target) then return end
     
@@ -39,6 +39,7 @@ function TDMRP_SendHitNumber(attacker, target, dmg, pos, isHeadshot, willKill)
         net.WriteUInt(math.min(dmg, 65535), 16)
         net.WriteBool(isHeadshot or false)
         net.WriteBool(willKill or false)
+        net.WriteBool(isQuadDamage or false)
     net.Send(attacker)
 
     -- Play headshot kill sound for both players if this is a headshot kill

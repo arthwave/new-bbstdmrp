@@ -489,6 +489,8 @@ hook.Add("EntityTakeDamage", "TDMRP_QuadDamage", function(target, dmginfo)
     local buff = TDMRP.ActiveSkills.ActiveBuffs[attacker]
     if buff and buff.skill == "quaddamage" and CurTime() < buff.endTime then
         dmginfo:ScaleDamage(4)
+        -- Mark this damage as quad damage so hitnumbers can display it specially
+        dmginfo.TDMRP_IsQuadDamage = true
     end
 end)
 

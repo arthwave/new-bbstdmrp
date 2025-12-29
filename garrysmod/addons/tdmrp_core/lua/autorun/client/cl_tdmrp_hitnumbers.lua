@@ -19,6 +19,13 @@ surface.CreateFont("TDMRP_HitNumBig", {
     antialias = true,
 })
 
+surface.CreateFont("TDMRP_HitNumQuad", {
+    font = "Tahoma",
+    size = 48,
+    weight = 900,
+    antialias = true,
+})
+
 surface.CreateFont("TDMRP_ChainDamage", {
     font = "Tahoma",
     size = 24,
@@ -31,12 +38,14 @@ net.Receive("TDMRP_HitNumber", function()
     local dmg        = net.ReadUInt(16)
     local isHeadshot = net.ReadBool()
     local isKill     = net.ReadBool()
+    local isQuadDamage = net.ReadBool()
 
     table.insert(hitNums, {
         pos        = pos,
         dmg        = dmg,
         headshot   = isHeadshot,
         kill       = isKill,
+        quad       = isQuadDamage,
         born       = CurTime(),
         life       = isHeadshot and 0.9 or 0.6, -- headshots hang around a bit longer
         drift      = VectorRand() * 2 + Vector(0, 0, isHeadshot and 20 or 14),
@@ -79,28 +88,32 @@ hook.Add("HUDPaint", "TDMRP_DrawHitNumbers", function()
                 -- Fade out over time
                 local alpha = 255 * (1 - frac)
 
-                local txt  = tostring(data.dmg)
-                local col
-                local fontName
+            local txt  = tostring(data.dmg)
+            local col
+            local fontName
 
-                if data.isChain then
-                    -- Pale light blue for chain lightning damage (smaller)
-                    fontName = "TDMRP_ChainDamage"
-                    col      = Color(150, 200, 255, alpha)  -- Pale light blue
-                elseif data.headshot then
-                    -- Big dark red for headshots
-                    fontName = "TDMRP_HitNumBig"
+            if data.isChain then
+                -- Pale light blue for chain lightning damage (smaller)
+                fontName = "TDMRP_ChainDamage"
+                col      = Color(150, 200, 255, alpha)  -- Pale light blue
+            elseif data.quad then
+                -- Orange for quad damage (larger)
+                fontName = "TDMRP_HitNumQuad"
+                col      = Color(255, 140, 0, alpha)  -- Dark orange
+            elseif data.headshot then
+                -- Big dark red for headshots
+                fontName = "TDMRP_HitNumBig"
 
-                    if data.kill then
-                        -- Extra dark red for lethal headshots
-                        col = Color(200, 10, 10, alpha)
-                    else
-                        col = Color(220, 20, 20, alpha)
-                    end
+                if data.kill then
+                    -- Extra dark red for lethal headshots
+                    col = Color(200, 10, 10, alpha)
                 else
-                    fontName = "TDMRP_HitNum"
-                    col      = Color(255, 255, 255, alpha)
+                    col = Color(220, 20, 20, alpha)
                 end
+            else
+                fontName = "TDMRP_HitNum"
+                col      = Color(255, 255, 255, alpha)
+            end
 
                 surface.SetFont(fontName)
                 local tw, th = surface.GetTextSize(txt)
