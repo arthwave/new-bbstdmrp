@@ -22,27 +22,18 @@ local function InitializePointData()
         file.CreateDir("data/tdmrp")
     end
     
-    -- Load existing data or create new
-    if file.Exists(dataPath, "DATA") then
-        local jsonStr = file.Read(dataPath, "DATA")
-        local data = util.JSONToTable(jsonStr)
-        if data then
-            TDMRP.CapturePoints.PointData = data
-            print("[TDMRP] Loaded capture point data from file")
-        end
-    else
-        -- Initialize with defaults
-        for id, point in pairs(TDMRP.CapturePoints.GetAllPoints()) do
-            TDMRP.CapturePoints.PointData[id] = {
-                owner = TDMRP.CapturePoints.OWNER_NEUTRAL,
-                progress = 0,
-                last_interaction = 0,
-                captured_by = nil
-            }
-        end
-        SavePointData()
-        print("[TDMRP] Created new capture point data file")
+    -- Always reset all points to neutral on map start
+    -- (Don't load from previous map state)
+    for id, point in pairs(TDMRP.CapturePoints.GetAllPoints()) do
+        TDMRP.CapturePoints.PointData[id] = {
+            owner = TDMRP.CapturePoints.OWNER_NEUTRAL,
+            progress = 0,
+            last_interaction = CurTime(),
+            captured_by = nil
+        }
     end
+    SavePointData()
+    print("[TDMRP] Initialized all capture points to NEUTRAL")
 end
 
 ----------------------------------------------------
@@ -129,49 +120,75 @@ local function UpdateCaptureProgress()
             data.owner = TDMRP.CapturePoints.OWNER_CONTESTED
             -- Don't increment progress when contested
         elseif copCount > 0 then
-            -- Only cops present - increment progress but DON'T change owner until capture completes
+            -- Only cops present
             data.last_interaction = now
             
-            local speedMult = GetCaptureSpeedMultiplier(copCount)
-            local progressRate = (100 / TDMRP.CapturePoints.CAPTURE_TIME_PER_PHASE) * speedMult
-            data.progress = data.progress + (progressRate * deltaTime)
-            
-            if data.progress >= 100 then
-                -- Capture complete - NOW change owner
-                data.progress = 100
-                if data.owner ~= TDMRP.CapturePoints.OWNER_COP then
-                    -- Ownership changed to cop
-                    data.owner = TDMRP.CapturePoints.OWNER_COP
-                    data.captured_by = "cop"
-                    OnPointCaptured(pointID, "cop")
-                else
-                    -- Already cop owned, just maintain
-                    data.owner = TDMRP.CapturePoints.OWNER_COP
+            -- If crims owned this point, must decay to neutral first before cops can capture
+            if data.owner == TDMRP.CapturePoints.OWNER_CRIM and data.progress > 0 then
+                -- Decay the crim progress
+                local decayRate = 100 / TDMRP.CapturePoints.CAPTURE_TIME_PER_PHASE
+                data.progress = data.progress - (decayRate * deltaTime)
+                
+                if data.progress <= 0 then
+                    data.progress = 0
+                    data.owner = TDMRP.CapturePoints.OWNER_NEUTRAL
+                    data.captured_by = nil
+                end
+            else
+                -- Progress toward cop capture
+                local speedMult = GetCaptureSpeedMultiplier(copCount)
+                local progressRate = (100 / TDMRP.CapturePoints.CAPTURE_TIME_PER_PHASE) * speedMult
+                data.progress = data.progress + (progressRate * deltaTime)
+                
+                if data.progress >= 100 then
+                    -- Capture complete - NOW change owner
+                    data.progress = 100
+                    if data.owner ~= TDMRP.CapturePoints.OWNER_COP then
+                        -- Ownership changed to cop
+                        data.owner = TDMRP.CapturePoints.OWNER_COP
+                        data.captured_by = "cop"
+                        OnPointCaptured(pointID, "cop")
+                    else
+                        -- Already cop owned, just maintain
+                        data.owner = TDMRP.CapturePoints.OWNER_COP
+                    end
                 end
             end
-            -- While capturing (progress < 100), keep existing owner - don't update it
         elseif crimCount > 0 then
-            -- Only crims present - increment progress but DON'T change owner until capture completes
+            -- Only crims present
             data.last_interaction = now
             
-            local speedMult = GetCaptureSpeedMultiplier(crimCount)
-            local progressRate = (100 / TDMRP.CapturePoints.CAPTURE_TIME_PER_PHASE) * speedMult
-            data.progress = data.progress + (progressRate * deltaTime)
-            
-            if data.progress >= 100 then
-                -- Capture complete - NOW change owner
-                data.progress = 100
-                if data.owner ~= TDMRP.CapturePoints.OWNER_CRIM then
-                    -- Ownership changed to crim
-                    data.owner = TDMRP.CapturePoints.OWNER_CRIM
-                    data.captured_by = "criminal"
-                    OnPointCaptured(pointID, "criminal")
-                else
-                    -- Already crim owned, just maintain
-                    data.owner = TDMRP.CapturePoints.OWNER_CRIM
+            -- If cops owned this point, must decay to neutral first before crims can capture
+            if data.owner == TDMRP.CapturePoints.OWNER_COP and data.progress > 0 then
+                -- Decay the cop progress
+                local decayRate = 100 / TDMRP.CapturePoints.CAPTURE_TIME_PER_PHASE
+                data.progress = data.progress - (decayRate * deltaTime)
+                
+                if data.progress <= 0 then
+                    data.progress = 0
+                    data.owner = TDMRP.CapturePoints.OWNER_NEUTRAL
+                    data.captured_by = nil
+                end
+            else
+                -- Progress toward crim capture
+                local speedMult = GetCaptureSpeedMultiplier(crimCount)
+                local progressRate = (100 / TDMRP.CapturePoints.CAPTURE_TIME_PER_PHASE) * speedMult
+                data.progress = data.progress + (progressRate * deltaTime)
+                
+                if data.progress >= 100 then
+                    -- Capture complete - NOW change owner
+                    data.progress = 100
+                    if data.owner ~= TDMRP.CapturePoints.OWNER_CRIM then
+                        -- Ownership changed to crim
+                        data.owner = TDMRP.CapturePoints.OWNER_CRIM
+                        data.captured_by = "criminal"
+                        OnPointCaptured(pointID, "criminal")
+                    else
+                        -- Already crim owned, just maintain
+                        data.owner = TDMRP.CapturePoints.OWNER_CRIM
+                    end
                 end
             end
-            -- While capturing (progress < 100), keep existing owner - don't update it
         else
             -- No one in radius, start decay after inactivity timeout
             local inactiveTime = now - data.last_interaction
@@ -263,7 +280,7 @@ function GrantCaptureRewards(pointID, capturedBy)
     if not point then return end
     
     for _, ply in ipairs(player.GetAll()) do
-        if not ply:Alive() then continue end
+        if not IsValid(ply) or not ply:Alive() then continue end
         
         local job = ply:getJobTable()
         if not job then continue end
@@ -273,8 +290,12 @@ function GrantCaptureRewards(pointID, capturedBy)
            ((capturedBy == "cop" and job.tdmrp_class == "cop") or 
             (capturedBy == "criminal" and job.tdmrp_class == "criminal")) then
             
-            -- Give XP and money
-            ply:AddMoney(500)
+            -- Give money using DarkRP
+            if ply.addMoney then
+                ply:addMoney(500)
+            elseif ply.AddMoney then
+                ply:AddMoney(500)
+            end
             
             -- Add XP if system exists
             if TDMRP.XP and TDMRP.XP.AddXP then

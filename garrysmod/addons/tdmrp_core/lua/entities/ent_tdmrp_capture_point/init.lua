@@ -1,3 +1,6 @@
+-- Server initialization - this is called after shared.lua is loaded
+-- Type and Base are already set in shared.lua
+
 function ENT:Initialize()
     self:SetModel("models/props_interiors/VendingMachineSoda01a.mdl")
     self:SetMaterial("phoenix_storms/mat/mat_phx_carbonfiber2")

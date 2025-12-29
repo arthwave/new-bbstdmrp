@@ -7,6 +7,33 @@ if not SERVER then return end
 util.AddNetworkString("TDMRP_BuyWeapon")
 
 ----------------------------------------------------------------------
+-- CSS Weapons Registry (server-side)
+-- These weapons use weapon_tdmrp_cs_* class names
+----------------------------------------------------------------------
+
+local CSS_WEAPONS = {
+    ["weapon_tdmrp_cs_glock18"] = { name = "Glock-18", basePrice = 500, type = "pistol" },
+    ["weapon_tdmrp_cs_usp"] = { name = "USP", basePrice = 600, type = "pistol" },
+    ["weapon_tdmrp_cs_p228"] = { name = "P228", basePrice = 550, type = "pistol" },
+    ["weapon_tdmrp_cs_five_seven"] = { name = "Five-Seven", basePrice = 700, type = "pistol" },
+    ["weapon_tdmrp_cs_elites"] = { name = "Dual Elites", basePrice = 900, type = "pistol" },
+    ["weapon_tdmrp_cs_desert_eagle"] = { name = "Desert Eagle", basePrice = 1200, type = "pistol" },
+    ["weapon_tdmrp_cs_mp5a5"] = { name = "MP5", basePrice = 1800, type = "smg" },
+    ["weapon_tdmrp_cs_p90"] = { name = "P90", basePrice = 2200, type = "smg" },
+    ["weapon_tdmrp_cs_mac10"] = { name = "MAC-10", basePrice = 1500, type = "smg" },
+    ["weapon_tdmrp_cs_tmp"] = { name = "TMP", basePrice = 1300, type = "smg" },
+    ["weapon_tdmrp_cs_ump_45"] = { name = "UMP-45", basePrice = 1600, type = "smg" },
+    ["weapon_tdmrp_cs_ak47"] = { name = "AK-47", basePrice = 3500, type = "rifle" },
+    ["weapon_tdmrp_cs_m4a1"] = { name = "M4A1", basePrice = 3800, type = "rifle" },
+    ["weapon_tdmrp_cs_aug"] = { name = "AUG", basePrice = 4000, type = "rifle" },
+    ["weapon_tdmrp_cs_famas"] = { name = "FAMAS", basePrice = 2800, type = "rifle" },
+    ["weapon_tdmrp_cs_sg552"] = { name = "SG552", basePrice = 3600, type = "rifle" },
+    ["weapon_tdmrp_cs_pumpshotgun"] = { name = "Pump Shotgun", basePrice = 2000, type = "shotgun" },
+    ["weapon_tdmrp_cs_awp"] = { name = "AWP", basePrice = 6000, type = "sniper" },
+    ["weapon_tdmrp_cs_knife"] = { name = "Knife", basePrice = 100, type = "melee" },
+}
+
+----------------------------------------------------------------------
 -- Which jobs are weapon vendors?
 -- Gun Dealer, Quartermaster, Trafficker can all sell weapons
 ----------------------------------------------------------------------
@@ -86,9 +113,9 @@ end
 net.Receive("TDMRP_BuyWeapon", function(_, ply)
     if not IsValid(ply) then return end
 
-    -- Client sends the M9K class name (e.g., "m9k_glock")
-    local m9kClass = net.ReadString()
-    if not m9kClass or m9kClass == "" then return end
+    -- Client sends the weapon class name (e.g., "m9k_glock" or "weapon_tdmrp_cs_ak47")
+    local weaponClass = net.ReadString()
+    if not weaponClass or weaponClass == "" then return end
 
     -- Allow all classes (cop, criminal, civilian) to access weapon shop
     local jobTable = ply:getJobTable()
@@ -103,23 +130,46 @@ net.Receive("TDMRP_BuyWeapon", function(_, ply)
         return
     end
 
-    -- Validate weapon exists in registry
-    if not TDMRP.M9KRegistry or not TDMRP.M9KRegistry[m9kClass] then
-        ply:ChatPrint("[TDMRP] Unknown weapon: " .. tostring(m9kClass))
-        return
+    -- Determine if this is a CSS weapon or M9K weapon
+    -- "weapon_tdmrp_cs_" is 16 characters
+    local isCSS = string.sub(weaponClass, 1, 16) == "weapon_tdmrp_cs_"
+    local meta = nil
+    local tdmrpClass = nil
+    local price = 0
+    
+    if isCSS then
+        -- CSS weapon - class IS the final class
+        if not CSS_WEAPONS[weaponClass] then
+            ply:ChatPrint("[TDMRP] Unknown CSS weapon: " .. tostring(weaponClass))
+            return
+        end
+        meta = CSS_WEAPONS[weaponClass]
+        tdmrpClass = weaponClass
+        price = meta.basePrice or 0
+    else
+        -- M9K weapon - need to look up in registry
+        if not TDMRP.M9KRegistry or not TDMRP.M9KRegistry[weaponClass] then
+            ply:ChatPrint("[TDMRP] Unknown M9K weapon: " .. tostring(weaponClass))
+            return
+        end
+        meta = TDMRP.M9KRegistry[weaponClass]
+        tdmrpClass = GetTDMRPClass(weaponClass)
+        price = meta.basePrice or 0
+    end
+    
+    -- Validate weapon is in active loadout (60-weapon filter)
+    if TDMRP.IsActiveWeapon then
+        if not TDMRP.IsActiveWeapon(weaponClass) and not TDMRP.IsActiveWeapon(tdmrpClass) then
+            ply:ChatPrint("[TDMRP] This weapon is not available in the current loadout.")
+            return
+        end
     end
 
-    local meta = TDMRP.M9KRegistry[m9kClass]
-
     -- Get price (basePrice is the Tier 1 price)
-    local price = meta.basePrice or 0
     if price <= 0 then
         ply:ChatPrint("[TDMRP] This weapon cannot be purchased.")
         return
     end
-
-    -- Get the TDMRP derived class
-    local tdmrpClass = GetTDMRPClass(m9kClass)
 
     -- Prevent buying a second copy of same class if already equipped
     if not TDMRP_CanPlayerReceiveWeaponClass(ply, tdmrpClass) then
@@ -163,7 +213,7 @@ net.Receive("TDMRP_BuyWeapon", function(_, ply)
     ply:SelectWeapon(tdmrpClass)
 
     -- Notify player
-    ply:ChatPrint("[TDMRP] Purchased " .. (meta.name or m9kClass) .. " for $" .. price)
+    ply:ChatPrint("[TDMRP] Purchased " .. (meta.name or tdmrpClass) .. " for $" .. price)
     
     print(string.format("[TDMRP Shop] %s bought %s (Tier 1 Common) for $%d", 
         ply:Nick(), tdmrpClass, price))

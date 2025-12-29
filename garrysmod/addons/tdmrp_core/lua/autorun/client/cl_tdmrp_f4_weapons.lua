@@ -61,16 +61,57 @@ local typeFilters = {
 local function GetFilteredWeapons()
     local weapons = {}
     
-    -- Use the M9K weapon registry
-    if not TDMRP.M9KRegistry then return weapons end
+    -- CSS weapons metadata (19 weapons) with world models for shop display
+    local CSS_WEAPONS = {
+        ["weapon_tdmrp_cs_glock18"] = { name = "Glock-18", type = "pistol", worldModel = "models/weapons/w_pist_glock18.mdl" },
+        ["weapon_tdmrp_cs_usp"] = { name = "USP", type = "pistol", worldModel = "models/weapons/w_pist_usp.mdl" },
+        ["weapon_tdmrp_cs_p228"] = { name = "P228", type = "pistol", worldModel = "models/weapons/w_pist_p228.mdl" },
+        ["weapon_tdmrp_cs_five_seven"] = { name = "Five-Seven", type = "pistol", worldModel = "models/weapons/w_pist_fiveseven.mdl" },
+        ["weapon_tdmrp_cs_elites"] = { name = "Dual Elites", type = "pistol", worldModel = "models/weapons/w_pist_elite.mdl" },
+        ["weapon_tdmrp_cs_desert_eagle"] = { name = "Desert Eagle", type = "pistol", worldModel = "models/weapons/w_pist_deagle.mdl" },
+        ["weapon_tdmrp_cs_mp5a5"] = { name = "MP5", type = "smg", worldModel = "models/weapons/w_smg_mp5.mdl" },
+        ["weapon_tdmrp_cs_p90"] = { name = "P90", type = "smg", worldModel = "models/weapons/w_smg_p90.mdl" },
+        ["weapon_tdmrp_cs_mac10"] = { name = "MAC-10", type = "smg", worldModel = "models/weapons/w_smg_mac10.mdl" },
+        ["weapon_tdmrp_cs_tmp"] = { name = "TMP", type = "smg", worldModel = "models/weapons/w_smg_tmp.mdl" },
+        ["weapon_tdmrp_cs_ump_45"] = { name = "UMP-45", type = "smg", worldModel = "models/weapons/w_smg_ump45.mdl" },
+        ["weapon_tdmrp_cs_ak47"] = { name = "AK-47", type = "rifle", worldModel = "models/weapons/w_rif_ak47.mdl" },
+        ["weapon_tdmrp_cs_m4a1"] = { name = "M4A1", type = "rifle", worldModel = "models/weapons/w_rif_m4a1.mdl" },
+        ["weapon_tdmrp_cs_aug"] = { name = "AUG", type = "rifle", worldModel = "models/weapons/w_rif_aug.mdl" },
+        ["weapon_tdmrp_cs_famas"] = { name = "FAMAS", type = "rifle", worldModel = "models/weapons/w_rif_famas.mdl" },
+        ["weapon_tdmrp_cs_sg552"] = { name = "SG552", type = "rifle", worldModel = "models/weapons/w_rif_sg552.mdl" },
+        ["weapon_tdmrp_cs_pumpshotgun"] = { name = "Pump Shotgun", type = "shotgun", worldModel = "models/weapons/w_shot_m3super90.mdl" },
+        ["weapon_tdmrp_cs_awp"] = { name = "AWP", type = "sniper", worldModel = "models/weapons/w_snip_awp.mdl" },
+        ["weapon_tdmrp_cs_knife"] = { name = "Knife", type = "melee", worldModel = "models/weapons/w_knife_t.mdl" },
+    }
     
-    for class, meta in pairs(TDMRP.M9KRegistry) do
-        local wepType = meta.type or "pistol"
-        if selectedType == "all" or wepType == selectedType then
-            table.insert(weapons, {
-                class = class,
-                meta = meta,
-            })
+    -- Filter to active loadout weapons only (60-weapon system)
+    local activeWeapons = TDMRP.ActiveWeaponLoadout or {}
+    local isActive = TDMRP.IsActiveWeapon or function() return true end
+    
+    -- Add M9K weapons from registry
+    if TDMRP.M9KRegistry then
+        for class, meta in pairs(TDMRP.M9KRegistry) do
+            if isActive(class) then
+                local wepType = meta.type or "pistol"
+                if selectedType == "all" or wepType == selectedType then
+                    table.insert(weapons, {
+                        class = class,
+                        meta = meta,
+                    })
+                end
+            end
+        end
+    end
+    
+    -- Add CSS weapons
+    for class, meta in pairs(CSS_WEAPONS) do
+        if isActive(class) then
+            if selectedType == "all" or meta.type == selectedType then
+                table.insert(weapons, {
+                    class = class,
+                    meta = meta,
+                })
+            end
         end
     end
     
@@ -163,14 +204,47 @@ local function GetOrCreateWeaponModelPanel(class, worldModel, x, y, size)
 end
 
 ----------------------------------------------------
--- Helper: Get weapon price from registry
+-- Helper: Get weapon price from registry or CSS weapons
 ----------------------------------------------------
 
+-- CSS weapon prices (must match server-side)
+local CSS_WEAPON_PRICES = {
+    ["weapon_tdmrp_cs_glock18"] = 500,
+    ["weapon_tdmrp_cs_usp"] = 600,
+    ["weapon_tdmrp_cs_p228"] = 550,
+    ["weapon_tdmrp_cs_five_seven"] = 700,
+    ["weapon_tdmrp_cs_elites"] = 900,
+    ["weapon_tdmrp_cs_desert_eagle"] = 1200,
+    ["weapon_tdmrp_cs_mp5a5"] = 1800,
+    ["weapon_tdmrp_cs_p90"] = 2200,
+    ["weapon_tdmrp_cs_mac10"] = 1500,
+    ["weapon_tdmrp_cs_tmp"] = 1300,
+    ["weapon_tdmrp_cs_ump_45"] = 1600,
+    ["weapon_tdmrp_cs_ak47"] = 3500,
+    ["weapon_tdmrp_cs_m4a1"] = 3800,
+    ["weapon_tdmrp_cs_aug"] = 4000,
+    ["weapon_tdmrp_cs_famas"] = 2800,
+    ["weapon_tdmrp_cs_sg552"] = 3600,
+    ["weapon_tdmrp_cs_pumpshotgun"] = 2000,
+    ["weapon_tdmrp_cs_awp"] = 6000,
+    ["weapon_tdmrp_cs_knife"] = 100,
+}
+
 local function GetWeaponPrice(class)
-    if not TDMRP.M9KRegistry then return 5000 end
-    local meta = TDMRP.M9KRegistry[class]
-    if not meta then return 5000 end
-    return meta.price or 5000
+    -- Check CSS weapons first
+    if CSS_WEAPON_PRICES[class] then
+        return CSS_WEAPON_PRICES[class]
+    end
+    
+    -- Check M9K registry
+    if TDMRP.M9KRegistry then
+        local meta = TDMRP.M9KRegistry[class]
+        if meta then
+            return meta.price or meta.basePrice or 5000
+        end
+    end
+    
+    return 5000  -- Default fallback
 end
 
 ----------------------------------------------------

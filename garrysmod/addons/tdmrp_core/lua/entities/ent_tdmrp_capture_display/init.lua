@@ -13,7 +13,7 @@ function ENT:Initialize()
     self:SetModel("models/props/cs_assault/TicketMachine.mdl")
     self:SetSolid(SOLID_VPHYSICS)
     self:SetMoveType(MOVETYPE_NONE)
-    self:SetCollisionGroup(COLLISION_GROUP_WORLD)
+    self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)  -- Allow player collision
     
     -- Default color (darkened)
     self:SetColor(Color(30, 30, 30, 255))

@@ -154,65 +154,71 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
     -- Store original IronSight function
     wep.TDMRP_Orig_IronSight = wep.IronSight
     
-    -- Override IronSight to skip sprint handling
+    -- Override IronSight to skip sprint handling (TDMRP disables sprint)
+    -- This is a cleaned up version of bobs_gun_base's IronSight without sprint code
     wep.IronSight = function(self)
         if not IsValid(self) then return end
         
         local owner = self.Owner
-        if not (IsValid(owner) and owner:IsPlayer()) then
+        if not IsValid(owner) then return end
+        
+        -- NPCs use original function
+        if owner:IsNPC() then
             if self.TDMRP_Orig_IronSight then
                 return self:TDMRP_Orig_IronSight()
             end
             return
         end
         
-        -- Run the parts of IronSight we want, skipping sprint code
-        -- Handle silencer toggle
-        if self.CanBeSilenced and self.NextSilence < CurTime() then
+        -- Reset sights after reload animation (from original bobs_gun_base)
+        if self.ResetSights and CurTime() >= self.ResetSights then
+            self.ResetSights = nil
+            if self.Silenced then
+                self:SendWeaponAnim(ACT_VM_IDLE_SILENCED)
+            else
+                self:SendWeaponAnim(ACT_VM_IDLE)
+            end
+        end
+        
+        -- Handle silencer toggle (USE + right click)
+        if self.CanBeSilenced and (self.NextSilence or 0) < CurTime() then
             if owner:KeyDown(IN_USE) and owner:KeyPressed(IN_ATTACK2) then
                 self:Silencer()
             end
         end
         
-        -- Handle selective fire
-        if self.SelectiveFire and self.NextFireSelect < CurTime() and not self:GetNWBool("Reloading") then
+        -- Handle selective fire (USE + reload)
+        if self.SelectiveFire and (self.NextFireSelect or 0) < CurTime() and not self:GetNWBool("Reloading") then
             if owner:KeyDown(IN_USE) and owner:KeyPressed(IN_RELOAD) then
                 self:SelectFireMode()
             end
         end
         
-        -- SKIP THE SPRINT CODE ENTIRELY
-        -- (lines 812-827 in bobs_gun_base that set RunSightsPos)
+        -- SKIP SPRINT CODE - TDMRP disables sprint globally
+        -- (original bobs_gun_base lines 820-833 handled IN_SPEED)
         
-        -- Handle ADS toggle (only if not pressing USE and not sprinting... but we let sprint through)
+        -- Handle ADS toggle (only if not pressing USE)
         if not owner:KeyDown(IN_USE) then
             if owner:KeyPressed(IN_ATTACK2) and not self:GetNWBool("Reloading") then
-                local ironFOV = (self.Secondary and self.Secondary.IronFOV) or 20
+                local ironFOV = (self.Secondary and self.Secondary.IronFOV) or 55
                 owner:SetFOV(ironFOV, 0.3)
                 self.IronSightsPos = self.SightsPos
                 self.IronSightsAng = self.SightsAng
                 self:SetIronsights(true, owner)
                 self.DrawCrosshair = false
-                -- Hide viewmodel during ADS ONLY for scoped weapons (very low FOV indicates zoom scope)
-                if CLIENT and IsValid(owner:GetViewModel()) and ironFOV < 30 then
-                    owner:GetViewModel():SetNoDraw(true)
-                end
                 if CLIENT then return end
             end
         end
         
+        -- Handle ADS release (only if not pressing USE)
         if owner:KeyReleased(IN_ATTACK2) and not owner:KeyDown(IN_USE) then
             owner:SetFOV(0, 0.3)
             self.DrawCrosshair = self.OrigCrossHair or true
             self:SetIronsights(false, owner)
-            -- Show viewmodel when exiting ADS
-            if CLIENT and IsValid(owner:GetViewModel()) then
-                owner:GetViewModel():SetNoDraw(false)
-            end
             if CLIENT then return end
         end
         
-        -- Handle sway/bob for ADS
+        -- Handle sway/bob reduction during ADS
         if owner:KeyDown(IN_ATTACK2) and not owner:KeyDown(IN_USE) then
             self.SwayScale = 0.05
             self.BobScale = 0.05
@@ -914,9 +920,9 @@ function TDMRP_WeaponMixin.GetModifiedRecoil(wep, baseRecoil)
 end
 
 function TDMRP_WeaponMixin.GetModifiedSpread(wep, baseSpread)
-    if not IsValid(wep) then return baseSpread end
+    if not IsValid(wep) then return baseSpread or 0 end
     
-    local spread = baseSpread
+    local spread = baseSpread or 0  -- Default to 0 if nil
     local movementPenaltyMult = 1  -- Modifiers can reduce movement penalty
     
     -- Apply prefix modifiers

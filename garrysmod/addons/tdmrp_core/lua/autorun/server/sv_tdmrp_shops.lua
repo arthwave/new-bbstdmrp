@@ -73,6 +73,14 @@ net.Receive("TDMRP_PurchaseWeapon", function(len, ply)
         return
     end
     
+    -- Validate weapon is in active loadout (60-weapon filter)
+    if TDMRP.IsActiveWeapon then
+        if not TDMRP.IsActiveWeapon(weaponClass) then
+            ply:ChatPrint("[TDMRP] This weapon is not available in the current loadout.")
+            return
+        end
+    end
+    
     -- Validate tier
     tier = math.Clamp(tier, 1, 5)
     
@@ -163,6 +171,11 @@ concommand.Add("tdmrp_giveweapon", function(ply, cmd, args)
     if not meta then
         ply:ChatPrint("[TDMRP] Unknown weapon: " .. weaponClass)
         return
+    end
+    
+    -- Check if weapon is in active loadout (admins can bypass for testing)
+    if TDMRP.IsActiveWeapon and not TDMRP.IsActiveWeapon(weaponClass) then
+        ply:ChatPrint("[TDMRP] Warning: " .. weaponClass .. " is not in active loadout (giving anyway for admin)")
     end
     
     local wep, instance = TDMRP.GiveM9KWeapon(ply, weaponClass, tier, crafted, {})

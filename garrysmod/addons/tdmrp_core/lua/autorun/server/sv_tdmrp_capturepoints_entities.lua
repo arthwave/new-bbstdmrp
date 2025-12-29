@@ -6,14 +6,11 @@ if CLIENT then return end
 
 TDMRP.CapturePoints.Entities = TDMRP.CapturePoints.Entities or {}
 
--- Local ownership constants
-local OWNER_NEUTRAL = 0
-
 ----------------------------------------------------
 -- Spawn all capture point entities
 ----------------------------------------------------
 local function SpawnCapturePointEntities()
-    -- Clear existing entities first
+    -- Clear existing display entities first
     for _, ent in ipairs(ents.FindByClass("ent_tdmrp_capture_display")) do
         ent:Remove()
     end
@@ -31,6 +28,7 @@ local function SpawnCapturePointEntities()
     end
     
     for pointID, point in pairs(points) do
+        -- Spawn display entity
         local ent = ents.Create("ent_tdmrp_capture_display")
         
         if not IsValid(ent) then
@@ -45,14 +43,13 @@ local function SpawnCapturePointEntities()
         -- Store metadata via networked vars
         ent:SetNWString("TDMRP_CapturePointID", tostring(pointID))
         ent:SetNWString("TDMRP_CapturePointName", point.name)
-        ent:SetNWInt("TDMRP_CapturePointOwner", OWNER_NEUTRAL)
+        ent:SetNWInt("TDMRP_CapturePointOwner", 0)  -- NEUTRAL
         ent:SetNWInt("TDMRP_CapturePointProgress", 0)
         
         TDMRP.CapturePoints.Entities[pointID] = ent
         
         print("[TDMRP] Spawned capture point display: " .. pointID .. " (" .. point.name .. ") at " .. tostring(point.position))
     end
-    
     print("[TDMRP] Total capture point displays spawned: " .. table.Count(TDMRP.CapturePoints.Entities))
 end
 
