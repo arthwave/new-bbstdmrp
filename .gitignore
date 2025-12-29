@@ -1,0 +1,21 @@
+# Game Assets - Too Large for GitHub
+garrysmod/*.vpk
+garrysmod/*.cache
+garrysmod/bin/
+garrysmod/sourceengine/
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
