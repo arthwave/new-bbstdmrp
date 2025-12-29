@@ -365,8 +365,8 @@ function TDMRP.Spawn.ApplyJobStats(ply)
     ply:SetNWString("TDMRP_DTName", dtName)
     
     -- Apply movement modifiers
-    local walkSpeed = job.tdmrp_walk_speed or 200
-    local runSpeed = job.tdmrp_run_speed or 300
+    local walkSpeed = job.tdmrp_walk_speed or 390
+    local runSpeed = job.tdmrp_run_speed or 540
     local jumpPower = job.tdmrp_jump_power or 160
     
     ply:SetWalkSpeed(walkSpeed)

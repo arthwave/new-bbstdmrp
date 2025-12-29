@@ -19,8 +19,8 @@ TDMRP.JobStats.ClassDefaults = {
         ap = 0,
         dt = 0,
         dt_name = "None",
-        walk_speed = 260,
-        run_speed = 360,
+        walk_speed = 390,
+        run_speed = 540,
         jump_power = 170,
     },
     cop = {
@@ -28,8 +28,8 @@ TDMRP.JobStats.ClassDefaults = {
         ap = 30,
         dt = 3,
         dt_name = "Lightweight Kevlar",
-        walk_speed = 200,
-        run_speed = 300,
+        walk_speed = 300,
+        run_speed = 450,
         jump_power = 160,
     },
     criminal = {
@@ -37,8 +37,8 @@ TDMRP.JobStats.ClassDefaults = {
         ap = 30,
         dt = 3,
         dt_name = "Lightweight Kevlar",
-        walk_speed = 210,
-        run_speed = 310,
+        walk_speed = 315,
+        run_speed = 465,
         jump_power = 160,
     },
     peacekeeper = {
@@ -46,8 +46,8 @@ TDMRP.JobStats.ClassDefaults = {
         ap = 0,
         dt = 0,
         dt_name = "Divine Protection",
-        walk_speed = 220,
-        run_speed = 320,
+        walk_speed = 330,
+        run_speed = 480,
         jump_power = 200,
     },
 }
@@ -74,33 +74,33 @@ TDMRP.JobStats.DTNames = {
 
 TDMRP.JobStats.MovementPresets = {
     normal = {
-        walk = 200,
-        run = 300,
+        walk = 300,
+        run = 450,
         jump = 160,
     },
     slow = {
-        walk = 140,
-        run = 180,
+        walk = 210,
+        run = 270,
         jump = 100,
     },
     fast = {
-        walk = 240,
-        run = 360,
+        walk = 360,
+        run = 540,
         jump = 180,
     },
     recon = {
-        walk = 300, -- +50% of 200
-        run = 450,  -- +50% of 300
+        walk = 450, -- +50% of 300
+        run = 675,  -- +50% of 450
         jump = 160,
     },
     yamakazi = {
-        walk = 320, -- 160% of 200
-        run = 480,  -- 160% of 300
+        walk = 480, -- 160% of 300
+        run = 720,  -- 160% of 450
         jump = 200,
     },
     masterchief = {
-        walk = 240, -- 120% of 200
-        run = 360,  -- 120% of 300
+        walk = 360, -- 120% of 300
+        run = 540,  -- 120% of 450
         jump = 240, -- 1.5x of 160
     },
 }
