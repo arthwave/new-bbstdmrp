@@ -24,6 +24,74 @@ local CONFIG = {
 }
 
 ----------------------------------------------------
+-- CSS Kill Icon Font Characters
+-- These correspond to CSKillIcons font glyphs
+----------------------------------------------------
+
+local CSS_ICON_LETTERS = {
+    ["weapon_tdmrp_cs_glock18"] = "c",
+    ["weapon_tdmrp_cs_usp"] = "a",
+    ["weapon_tdmrp_cs_p228"] = "y",
+    ["weapon_tdmrp_cs_five_seven"] = "u",
+    ["weapon_tdmrp_cs_elites"] = "s",
+    ["weapon_tdmrp_cs_desert_eagle"] = "f",
+    ["weapon_tdmrp_cs_mp5a5"] = "x",
+    ["weapon_tdmrp_cs_p90"] = "m",
+    ["weapon_tdmrp_cs_mac10"] = "k",
+    ["weapon_tdmrp_cs_tmp"] = "d",
+    ["weapon_tdmrp_cs_ump_45"] = "q",
+    ["weapon_tdmrp_cs_ak47"] = "b",
+    ["weapon_tdmrp_cs_m4a1"] = "w",
+    ["weapon_tdmrp_cs_aug"] = "e",
+    ["weapon_tdmrp_cs_famas"] = "t",
+    ["weapon_tdmrp_cs_sg552"] = "A",
+    ["weapon_tdmrp_cs_galil"] = "v",
+    ["weapon_tdmrp_cs_pumpshotgun"] = "k",
+    ["weapon_tdmrp_cs_awp"] = "r",
+    ["weapon_tdmrp_cs_scout"] = "n",
+    ["weapon_tdmrp_cs_knife"] = "j",
+}
+
+-- Create CSS Kill Icon font if not exists
+surface.CreateFont("TDMRP_CSKillIcon", {
+    font = "csd",  -- CS:S weapon icons
+    size = 48,
+    weight = 500,
+    antialias = true,
+    additive = false,
+})
+
+----------------------------------------------------
+-- Weapon Icon Cache (for M9K model renders)
+----------------------------------------------------
+
+local weaponIconCache = {}
+
+local function GetWeaponIcon(weaponClass)
+    -- Check if already cached
+    if weaponIconCache[weaponClass] then
+        return weaponIconCache[weaponClass]
+    end
+    
+    -- Try to get weapon's SelectIcon material
+    local wepTable = weapons.Get(weaponClass)
+    if wepTable then
+        -- Check for WepSelectIcon (common M9K field) - must be a string
+        if wepTable.WepSelectIcon and type(wepTable.WepSelectIcon) == "string" then
+            local success, mat = pcall(Material, wepTable.WepSelectIcon)
+            if success and mat and not mat:IsError() then
+                weaponIconCache[weaponClass] = { type = "material", mat = mat }
+                return weaponIconCache[weaponClass]
+            end
+        end
+    end
+    
+    -- No icon found
+    weaponIconCache[weaponClass] = nil
+    return nil
+end
+
+----------------------------------------------------
 -- UI State
 ----------------------------------------------------
 
@@ -66,8 +134,46 @@ local function GetWeaponDisplayName(class)
     
     -- Last resort: format class name
     local formatted = string.Replace(class, "tdmrp_m9k_", "")
+    formatted = string.Replace(formatted, "weapon_tdmrp_cs_", "")
     formatted = string.Replace(formatted, "_", " ")
     return string.upper(formatted)
+end
+
+----------------------------------------------------
+-- Helper: Draw Weapon Icon
+----------------------------------------------------
+
+local function DrawWeaponIcon(x, y, size, weaponClass, alpha)
+    alpha = alpha or 255
+    local C = TDMRP.UI.Colors
+    
+    -- Check for CSS weapon killicon
+    local cssLetter = CSS_ICON_LETTERS[weaponClass]
+    if cssLetter then
+        -- Draw CSS killicon using the font
+        draw.SimpleText(cssLetter, "TDMRP_CSKillIcon", x + size/2, y + size/2, 
+            ColorAlpha(Color(255, 180, 0), alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        return
+    end
+    
+    -- Try M9K weapon icon material
+    local iconData = GetWeaponIcon(weaponClass)
+    if iconData and iconData.type == "material" then
+        surface.SetMaterial(iconData.mat)
+        surface.SetDrawColor(255, 255, 255, alpha)
+        surface.DrawTexturedRect(x, y, size, size)
+        return
+    end
+    
+    -- Fallback: Draw placeholder with first letter
+    local displayName = GetWeaponDisplayName(weaponClass)
+    local letter = string.upper(string.sub(displayName, 1, 1))
+    
+    draw.RoundedBox(4, x, y, size, size, ColorAlpha(C.bg_dark, alpha))
+    surface.SetDrawColor(ColorAlpha(C.border_light, alpha))
+    surface.DrawOutlinedRect(x, y, size, size, 1)
+    draw.SimpleText(letter, "TDMRP_Header", x + size/2, y + size/2, 
+        ColorAlpha(C.text_muted, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
 ----------------------------------------------------
@@ -99,12 +205,13 @@ local function DrawWeaponSlot(x, y, w, h, weaponClass, isSelected, isHovered, al
     surface.SetDrawColor(borderColor)
     surface.DrawOutlinedRect(x, y, w, h, 2)
     
-    -- Weapon icon placeholder (using first letter)
+    -- Weapon icon (using new icon system)
     local iconSize = 50
     local iconX = x + 15
     local iconY = y + (h - iconSize) / 2
     local textAlpha = isDisabled and (alpha * 0.5) or alpha
-    TDMRP.UI.DrawIconPlaceholder(iconX, iconY, iconSize, string.upper(string.sub(GetWeaponDisplayName(weaponClass), 1, 1)), ColorAlpha(C.bg_dark, textAlpha))
+    
+    DrawWeaponIcon(iconX, iconY, iconSize, weaponClass, textAlpha)
     
     -- Weapon name
     local nameX = iconX + iconSize + 15
@@ -116,7 +223,10 @@ local function DrawWeaponSlot(x, y, w, h, weaponClass, isSelected, isHovered, al
     if isDisabled then
         draw.SimpleText("(You have a bound weapon)", "TDMRP_Small", nameX, nameY + 20, ColorAlpha(Color(255, 180, 0), textAlpha * 0.8), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
     else
-        draw.SimpleText(weaponClass, "TDMRP_Small", nameX, nameY + 20, ColorAlpha(C.text_muted, textAlpha * 0.8), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        -- Show shortened class name
+        local shortClass = string.Replace(weaponClass, "tdmrp_m9k_", "")
+        shortClass = string.Replace(shortClass, "weapon_tdmrp_cs_", "css:")
+        draw.SimpleText(shortClass, "TDMRP_Small", nameX, nameY + 20, ColorAlpha(C.text_muted, textAlpha * 0.8), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
     end
 end
 

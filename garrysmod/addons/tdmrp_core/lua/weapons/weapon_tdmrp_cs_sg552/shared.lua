@@ -1,7 +1,7 @@
--- SG552 (CS:S Wrapper)
+-- SG552 (CS:S Wrapper - Scoped Rifle)
 if SERVER then AddCSLuaFile() end
 
-SWEP.Base = "weapon_tdmrp_cs_base"
+SWEP.Base = "weapon_tdmrp_cs_scoped_base"
 SWEP.PrintName = "SG552 Commando"
 SWEP.Category = "TDMRP CSS Weapons"
 SWEP.Spawnable = true
@@ -23,7 +23,12 @@ SWEP.Primary.DefaultClip = 30
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "ar2"
 
-SWEP.Secondary.IronFOV = 55
+-- Scope settings (4x zoom)
+SWEP.UseScope = true
+SWEP.ScopeZooms = {4}
+SWEP.ScopeScale = 0.4
+SWEP.IronSightZoom = 1.3
+
 SWEP.IronSightsPos = Vector(-6.0, -14.8, 2.5)
 SWEP.IronSightsAng = Vector(2.15, 0.05, -0.35)
 SWEP.SightsPos = Vector(-6.0, -14.8, 2.5)

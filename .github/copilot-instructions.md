@@ -104,6 +104,65 @@ ents.Create("m9k_glock")
 
 ---
 
+## ⚠️ DEFINITIVE WEAPON LIST (63 Total - Only weapons with valid M9K bases)
+
+**CSS Weapons (21) - Class prefix: `weapon_tdmrp_cs_*`**
+
+| Type | Weapons |
+|------|---------|
+| **Pistols** | glock18, usp, p228, five_seven, elites, desert_eagle |
+| **SMGs** | mp5a5, p90, mac10, tmp, ump_45 |
+| **Rifles** | ak47, m4a1, aug, famas, sg552, galil |
+| **Shotgun** | pumpshotgun |
+| **Snipers** | awp, scout |
+| **Melee** | knife |
+
+**M9K Weapons (42) - Class prefix: `tdmrp_m9k_*`**
+**NOTE: Only these M9K weapons have valid base classes installed**
+
+| Type | Weapons |
+|------|---------|
+| **Pistols** | colt1911, hk45, m92beretta, sig_p229r, luger |
+| **Revolvers** | coltpython, deagle, m29satan, model500, ragingbull, model627 |
+| **SMGs** | mp5sd, mp7, thompson, uzi, mp40, mp9, bizonp19 |
+| **PDWs** | honeybadger, vector, magpulpdr |
+| **Rifles** | an94, fal, g36, l85, m416, scar, tar21, val, ak74, amd65, f2000, g3a3, m16a4_acog, acr |
+| **Shotguns** | spas12, 1887winchester, jackhammer |
+| **Snipers** | intervention, barret_m82 |
+| **LMGs** | m249lmg, m60 |
+
+**⚠️ MISSING BASE CLASSES (DO NOT USE):**
+These wrappers exist but their base m9k_* classes are not installed:
+glock, mp5, ump45, m4a1, ak47, tec9, mossberg590, ithacam37, striker12, usas, m24, svu, dragunov, pkm
+
+**Full Class Names for Reference:**
+```
+-- CSS Weapons (21)
+weapon_tdmrp_cs_glock18, weapon_tdmrp_cs_usp, weapon_tdmrp_cs_p228,
+weapon_tdmrp_cs_five_seven, weapon_tdmrp_cs_elites, weapon_tdmrp_cs_desert_eagle,
+weapon_tdmrp_cs_mp5a5, weapon_tdmrp_cs_p90, weapon_tdmrp_cs_mac10,
+weapon_tdmrp_cs_tmp, weapon_tdmrp_cs_ump_45, weapon_tdmrp_cs_ak47,
+weapon_tdmrp_cs_m4a1, weapon_tdmrp_cs_aug, weapon_tdmrp_cs_famas,
+weapon_tdmrp_cs_sg552, weapon_tdmrp_cs_galil, weapon_tdmrp_cs_pumpshotgun,
+weapon_tdmrp_cs_awp, weapon_tdmrp_cs_scout, weapon_tdmrp_cs_knife
+
+-- M9K Weapons (42 with valid bases)
+tdmrp_m9k_colt1911, tdmrp_m9k_hk45, tdmrp_m9k_m92beretta, tdmrp_m9k_sig_p229r,
+tdmrp_m9k_luger, tdmrp_m9k_coltpython, tdmrp_m9k_deagle,
+tdmrp_m9k_m29satan, tdmrp_m9k_model500, tdmrp_m9k_ragingbull, tdmrp_m9k_model627,
+tdmrp_m9k_mp5sd, tdmrp_m9k_mp7, tdmrp_m9k_thompson,
+tdmrp_m9k_uzi, tdmrp_m9k_mp40, tdmrp_m9k_bizonp19, tdmrp_m9k_mp9,
+tdmrp_m9k_honeybadger, tdmrp_m9k_vector, tdmrp_m9k_magpulpdr, tdmrp_m9k_an94,
+tdmrp_m9k_fal, tdmrp_m9k_g36, tdmrp_m9k_l85, tdmrp_m9k_m416, tdmrp_m9k_scar,
+tdmrp_m9k_tar21, tdmrp_m9k_val, tdmrp_m9k_ak74, tdmrp_m9k_amd65, tdmrp_m9k_f2000,
+tdmrp_m9k_g3a3, tdmrp_m9k_m16a4_acog, tdmrp_m9k_acr,
+tdmrp_m9k_spas12, tdmrp_m9k_1887winchester, tdmrp_m9k_jackhammer,
+tdmrp_m9k_intervention, tdmrp_m9k_barret_m82,
+tdmrp_m9k_m249lmg, tdmrp_m9k_m60
+```
+
+---
+
 ## Rarity System
 
 **Always display RARITY NAME, never "Tier N" or "T1":**

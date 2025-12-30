@@ -408,9 +408,12 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
         
         -- TDMRP: Bypass M9K's sprint check by directly calling ShootBulletInformation
         -- instead of letting the original PrimaryAttack block us
+        -- For CSS weapons (no ShootBulletInformation), use original PrimaryAttack
         local owner = self:GetOwner()
-        if IsValid(owner) and owner:IsPlayer() and owner:KeyDown(IN_SPEED) then
-            -- We're sprinting - bypass M9K's check and fire directly
+        local hasM9KBase = self.ShootBulletInformation ~= nil
+        
+        if IsValid(owner) and owner:IsPlayer() and owner:KeyDown(IN_SPEED) and hasM9KBase then
+            -- We're sprinting with M9K weapon - bypass M9K's check and fire directly
                 if self:CanPrimaryAttack() and not owner:KeyDown(IN_RELOAD) then
                 self:ShootBulletInformation()
                 local preClip = self:Clip1()
@@ -539,9 +542,29 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
     
     -------------------------------------------------
     -- Wrap ShootBullet (damage, tracer)
+    -- M9K uses: ShootBullet(damage, recoil, num_bullets, aimcone)
+    -- CSS uses: ShootBullet(damage, numbullets, aimcone)
     -------------------------------------------------
-    wep.ShootBullet = function(self, damage, recoil, num_bullets, aimcone)
+    wep.ShootBullet = function(self, damage, arg2, arg3, arg4)
         if not IsValid(self) then return end
+        
+        -- Detect signature: CSS passes 3 args, M9K passes 4
+        -- CSS: (damage, numbullets, aimcone) - arg4 is nil
+        -- M9K: (damage, recoil, num_bullets, aimcone) - arg4 is aimcone
+        local isCSS = (arg4 == nil)
+        local recoil, num_bullets, aimcone
+        
+        if isCSS then
+            -- CSS format: (damage, numbullets, aimcone)
+            recoil = self.Primary and self.Primary.Recoil or 0.5  -- Get recoil from weapon stats
+            num_bullets = arg2 or 1
+            aimcone = arg3 or 0.02
+        else
+            -- M9K format: (damage, recoil, num_bullets, aimcone)
+            recoil = arg2 or 0.5
+            num_bullets = arg3 or 1
+            aimcone = arg4 or 0.02
+        end
         
         -- Increment shot counter for recoil patterns
         self.TDMRP_ShotsFired = (self.TDMRP_ShotsFired or 0) + 1
@@ -576,14 +599,22 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
             -- Fire first shot with tighter spread (50% of modified spread)
             local firstSpread = modifiedSpread * 0.5
             if self.TDMRP_Orig_ShootBullet then
-                self:TDMRP_Orig_ShootBullet(modifiedDamage, modifiedRecoil, num_bullets, firstSpread)
+                if isCSS then
+                    self:TDMRP_Orig_ShootBullet(modifiedDamage, num_bullets, firstSpread)
+                else
+                    self:TDMRP_Orig_ShootBullet(modifiedDamage, modifiedRecoil, num_bullets, firstSpread)
+                end
             end
             
             -- Fire second shot with wider spread and directional variance
             -- Add random offset to each shot's direction (doubled variance)
             local secondSpread = modifiedSpread * (1.2 + math.Rand(-0.30, 0.70))  -- Random spread between 0.9-1.9x
             if self.TDMRP_Orig_ShootBullet then
-                self:TDMRP_Orig_ShootBullet(modifiedDamage, modifiedRecoil * 0.8, num_bullets, secondSpread)
+                if isCSS then
+                    self:TDMRP_Orig_ShootBullet(modifiedDamage, num_bullets, secondSpread)
+                else
+                    self:TDMRP_Orig_ShootBullet(modifiedDamage, modifiedRecoil * 0.8, num_bullets, secondSpread)
+                end
             end
             
             print(string.format("[TDMRP] Doubleshot fired: 2x shot, damage=%.1f each, spread1=%.3f spread2=%.3f", 
@@ -596,15 +627,21 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
             -- Recoil modification from modifiers  
             local modifiedRecoil = TDMRP_WeaponMixin.GetModifiedRecoil(self, recoil)
             
-            -- Spread modification from modifiers
+            -- Spread modification from modifiers (applies movement penalty)
             local modifiedSpread = TDMRP_WeaponMixin.GetModifiedSpread(self, aimcone)
             
             -- Store for callback access
             self.TDMRP_CurrentShotDamage = modifiedDamage
             
-            -- Call original with modified values
+            -- Call original with modified values - use correct signature for weapon type
             if self.TDMRP_Orig_ShootBullet then
-                self:TDMRP_Orig_ShootBullet(modifiedDamage, modifiedRecoil, num_bullets, modifiedSpread)
+                if isCSS then
+                    -- CSS format: (damage, numbullets, aimcone)
+                    self:TDMRP_Orig_ShootBullet(modifiedDamage, num_bullets, modifiedSpread)
+                else
+                    -- M9K format: (damage, recoil, num_bullets, aimcone)
+                    self:TDMRP_Orig_ShootBullet(modifiedDamage, modifiedRecoil, num_bullets, modifiedSpread)
+                end
             end
         end
         
@@ -1153,6 +1190,19 @@ function TDMRP_WeaponMixin.Setup(wep, skipTierReset)
 
     -- Apply tier scaling
     TDMRP_WeaponMixin.ApplyTierScaling(wep, tier)
+    
+    -- CRITICAL: After tier scaling, reapply craft modifiers if this weapon has been crafted
+    -- This ensures prefix/suffix bonuses aren't lost when Setup is called again
+    if SERVER then
+        local prefixId = wep:GetNWString("TDMRP_PrefixID", "")
+        local suffixId = wep:GetNWString("TDMRP_SuffixID", "")
+        if prefixId ~= "" or suffixId ~= "" then
+            -- Call the gem craft's ApplyAllCraftModifiers to reapply bonuses
+            if TDMRP and TDMRP.Gems and TDMRP.Gems.ApplyAllCraftModifiers then
+                TDMRP.Gems.ApplyAllCraftModifiers(wep)
+            end
+        end
+    end
 
     -- Set networked values for HUD display
     TDMRP_WeaponMixin.SetNetworkedStats(wep)

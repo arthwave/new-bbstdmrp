@@ -20,15 +20,61 @@ function TDMRP.IsM9KWeapon(wepOrClass)
     if not wepOrClass then return false end
     
     local className = nil
+    local wep = nil
     if type(wepOrClass) == "string" then
         className = wepOrClass
     elseif IsEntity(wepOrClass) and wepOrClass.GetClass then
         className = wepOrClass:GetClass()
+        wep = wepOrClass
     end
     
     if not className then return false end
-    -- Check for both base M9K weapons and TDMRP-derived M9K weapons
-    return string.StartWith(className, "m9k_") or string.StartWith(className, "tdmrp_m9k_")
+    
+    -- Check for M9K weapons, TDMRP M9K weapons, and CSS weapons
+    if string.StartWith(className, "m9k_") or 
+       string.StartWith(className, "tdmrp_m9k_") or
+       string.StartWith(className, "weapon_tdmrp_cs_") then
+        return true
+    end
+    
+    -- Also check for IsTDMRPWeapon flag on the entity
+    if wep and wep.IsTDMRPWeapon then
+        return true
+    end
+    
+    return false
+end
+
+----------------------------------------------------
+-- General TDMRP Weapon Detection (includes CSS)
+----------------------------------------------------
+
+function TDMRP.IsTDMRPWeaponGeneral(wepOrClass)
+    if not wepOrClass then return false end
+    
+    local className = nil
+    local wep = nil
+    if type(wepOrClass) == "string" then
+        className = wepOrClass
+    elseif IsEntity(wepOrClass) and wepOrClass.GetClass then
+        className = wepOrClass:GetClass()
+        wep = wepOrClass
+    end
+    
+    if not className then return false end
+    
+    -- Check class prefixes
+    if string.StartWith(className, "tdmrp_m9k_") or
+       string.StartWith(className, "weapon_tdmrp_cs_") then
+        return true
+    end
+    
+    -- Check for IsTDMRPWeapon flag
+    if wep and wep.IsTDMRPWeapon then
+        return true
+    end
+    
+    return false
 end
 
 ----------------------------------------------------

@@ -1,7 +1,7 @@
--- AUG (CS:S Wrapper)
+-- AUG (CS:S Wrapper - Scoped Rifle)
 if SERVER then AddCSLuaFile() end
 
-SWEP.Base = "weapon_tdmrp_cs_base"
+SWEP.Base = "weapon_tdmrp_cs_scoped_base"
 SWEP.PrintName = "Steyr AUG"
 SWEP.Category = "TDMRP CSS Weapons"
 SWEP.Spawnable = true
@@ -23,7 +23,12 @@ SWEP.Primary.DefaultClip = 30
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "ar2"
 
-SWEP.Secondary.IronFOV = 55
+-- Scope settings (4x zoom like real AUG)
+SWEP.UseScope = true
+SWEP.ScopeZooms = {4}
+SWEP.ScopeScale = 0.4
+SWEP.IronSightZoom = 1.3
+
 SWEP.IronSightsPos = Vector(-5.8, -14.5, 2.6)
 SWEP.IronSightsAng = Vector(2.1, 0, -0.3)
 SWEP.SightsPos = Vector(-5.8, -14.5, 2.6)

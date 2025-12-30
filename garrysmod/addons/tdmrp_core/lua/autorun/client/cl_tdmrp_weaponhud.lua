@@ -181,8 +181,9 @@ hook.Add("HUDPaint", "TDMRP_WeaponHUD", function()
     local className = wep:GetClass()
     local meta = TDMRP.GetM9KMeta and TDMRP.GetM9KMeta(className)
     
-    -- Don't require meta for new tdmrp_m9k_* weapons - they work without registry
-    if not meta and not string.StartWith(className, "tdmrp_m9k_") then 
+    -- Don't require meta for TDMRP weapons - they work without registry
+    -- Allow both tdmrp_m9k_* and weapon_tdmrp_cs_* class prefixes
+    if not meta and not string.StartWith(className, "tdmrp_m9k_") and not string.StartWith(className, "weapon_tdmrp_cs_") then 
         return 
     end
     

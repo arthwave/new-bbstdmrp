@@ -13,13 +13,13 @@ end
 ----------------------------------------------------
 -- LOADOUT STRUCTURE
 -- Each job defines:
---   Primary   = { list of tdmrp_m9k_* assault rifles, SMGs, etc }
---   Secondary = { list of tdmrp_m9k_* pistols, sidearms }
+--   Primary   = { list of tdmrp_m9k_* or weapon_tdmrp_cs_* rifles, SMGs, etc }
+--   Secondary = { list of tdmrp_m9k_* or weapon_tdmrp_cs_* pistols, sidearms }
 --   Gear      = { list of utility items: grenades, medkits, etc }
 ----------------------------------------------------
 
--- CRITICAL: ALL weapons MUST use tdmrp_m9k_* class names
--- NEVER use base m9k_* classes
+-- CRITICAL: ALL weapons MUST use tdmrp_m9k_* or weapon_tdmrp_cs_* class names
+-- NEVER use base m9k_* or weapon_cs_* classes
 
 ----------------------------------------------------
 -- COP CLASS LOADOUTS
@@ -28,13 +28,13 @@ end
 -- Police Recruit (Starter - basic loadout)
 TDMRP.LoadoutPools["policerecruit"] = {
     Primary = {
-        "tdmrp_m9k_mp5",
-        "tdmrp_m9k_ump45",
-        "tdmrp_m9k_uzi",
+        "tdmrp_m9k_mp5sd",
+        "tdmrp_m9k_mp7",
+        "weapon_tdmrp_cs_mp5a5",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
-        "tdmrp_m9k_usp",
+        "tdmrp_m9k_colt1911",
+        "weapon_tdmrp_cs_usp",
         "tdmrp_m9k_m92beretta",
     },
     Gear = {
@@ -45,13 +45,13 @@ TDMRP.LoadoutPools["policerecruit"] = {
 -- SWAT (Assault rifle specialist)
 TDMRP.LoadoutPools["swat"] = {
     Primary = {
-        "tdmrp_m9k_m4a1",
+        "tdmrp_m9k_acr",
         "tdmrp_m9k_g36",
-        "tdmrp_m9k_tar21",
+        "weapon_tdmrp_cs_m4a1",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
-        "tdmrp_m9k_usp",
+        "tdmrp_m9k_colt1911",
+        "weapon_tdmrp_cs_usp",
         "tdmrp_m9k_sig_p229r",
     },
     Gear = {
@@ -63,12 +63,12 @@ TDMRP.LoadoutPools["swat"] = {
 -- Field Surgeon (Medic - lighter weapons, heal focus)
 TDMRP.LoadoutPools["fieldsurgeon"] = {
     Primary = {
-        "tdmrp_m9k_mp5",
+        "tdmrp_m9k_mp5sd",
         "tdmrp_m9k_mp7",
-        "tdmrp_m9k_bizonpp19",
+        "weapon_tdmrp_cs_mp5a5",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
+        "tdmrp_m9k_colt1911",
         "tdmrp_m9k_m92beretta",
     },
     Gear = {
@@ -80,7 +80,7 @@ TDMRP.LoadoutPools["fieldsurgeon"] = {
 -- Armsmaster (Combat engineer - versatile)
 TDMRP.LoadoutPools["armsmaster"] = {
     Primary = {
-        "tdmrp_m9k_m4a1",
+        "weapon_tdmrp_cs_m4a1",
         "tdmrp_m9k_scar",
         "tdmrp_m9k_acr",
     },
@@ -97,9 +97,9 @@ TDMRP.LoadoutPools["armsmaster"] = {
 -- Marine (Close-range specialist)
 TDMRP.LoadoutPools["marine"] = {
     Primary = {
-        "tdmrp_m9k_mossberg590",
-        "tdmrp_m9k_ithacam37",
         "tdmrp_m9k_spas12",
+        "tdmrp_m9k_1887winchester",
+        "weapon_tdmrp_cs_pumpshotgun",
     },
     Secondary = {
         "tdmrp_m9k_deagle",
@@ -115,14 +115,14 @@ TDMRP.LoadoutPools["marine"] = {
 -- Special Forces (Sniper)
 TDMRP.LoadoutPools["specialforces"] = {
     Primary = {
-        "tdmrp_m9k_m24",
-        "tdmrp_m9k_svu",
-        "tdmrp_m9k_dragunov",
+        "tdmrp_m9k_intervention",
+        "tdmrp_m9k_barret_m82",
+        "weapon_tdmrp_cs_awp",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
+        "tdmrp_m9k_colt1911",
         "tdmrp_m9k_m92beretta",
-        "tdmrp_m9k_usp",
+        "weapon_tdmrp_cs_usp",
     },
     Gear = {
         "weapon_smoke",
@@ -138,12 +138,12 @@ TDMRP.LoadoutPools["recon"] = {
         "tdmrp_m9k_vector",
     },
     Secondary = {
-        "tdmrp_m9k_hk45c",
+        "tdmrp_m9k_hk45",
         "tdmrp_m9k_m92beretta",
     },
     Gear = {
         "weapon_smoke",
-        "weapon_knife",  -- Silent takedown
+        "weapon_tdmrp_cs_knife",  -- Silent takedown
     },
 }
 
@@ -151,8 +151,8 @@ TDMRP.LoadoutPools["recon"] = {
 TDMRP.LoadoutPools["vanguard"] = {
     Primary = {
         "tdmrp_m9k_m249lmg",
-        "tdmrp_m9k_pkm",
         "tdmrp_m9k_m60",
+        "weapon_tdmrp_cs_famas",
     },
     Secondary = {
         "tdmrp_m9k_deagle",
@@ -160,7 +160,7 @@ TDMRP.LoadoutPools["vanguard"] = {
     },
     Gear = {
         "weapon_frag",
-        "weapon_frag",  -- Double grenades
+        "weapon_flashbang",
     },
 }
 
@@ -168,8 +168,8 @@ TDMRP.LoadoutPools["vanguard"] = {
 TDMRP.LoadoutPools["armoredunit"] = {
     Primary = {
         "tdmrp_m9k_m249lmg",
-        "tdmrp_m9k_pkm",
         "tdmrp_m9k_m60",
+        "weapon_tdmrp_cs_aug",
     },
     Secondary = {
         "tdmrp_m9k_deagle",
@@ -184,12 +184,12 @@ TDMRP.LoadoutPools["armoredunit"] = {
 -- Mayor (Support/Command)
 TDMRP.LoadoutPools["mayor"] = {
     Primary = {
-        "tdmrp_m9k_m4a1",
-        "tdmrp_m9k_mp5",
+        "weapon_tdmrp_cs_m4a1",
+        "tdmrp_m9k_mp5sd",
         "tdmrp_m9k_acr",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
+        "tdmrp_m9k_colt1911",
         "tdmrp_m9k_deagle",
     },
     Gear = {
@@ -201,13 +201,13 @@ TDMRP.LoadoutPools["mayor"] = {
 -- Master Chief (Elite - best of the best)
 TDMRP.LoadoutPools["masterchief"] = {
     Primary = {
-        "tdmrp_m9k_m4a1",
+        "weapon_tdmrp_cs_m4a1",
         "tdmrp_m9k_scar",
         "tdmrp_m9k_g36",
     },
     Secondary = {
         "tdmrp_m9k_deagle",
-        "tdmrp_m9k_magnum",
+        "weapon_tdmrp_cs_desert_eagle",
     },
     Gear = {
         "weapon_plasmarifle",  -- Special active skill weapon
@@ -222,12 +222,12 @@ TDMRP.LoadoutPools["masterchief"] = {
 -- Gangster Initiate (Starter - basic loadout)
 TDMRP.LoadoutPools["gangsterinitiate"] = {
     Primary = {
-        "tdmrp_m9k_tec9",
+        "tdmrp_m9k_mp9",
         "tdmrp_m9k_uzi",
-        "tdmrp_m9k_mac10",
+        "weapon_tdmrp_cs_mac10",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
+        "tdmrp_m9k_colt1911",
         "tdmrp_m9k_m92beretta",
         "tdmrp_m9k_coltpython",
     },
@@ -239,12 +239,12 @@ TDMRP.LoadoutPools["gangsterinitiate"] = {
 -- Thief (Assault specialist)
 TDMRP.LoadoutPools["thief"] = {
     Primary = {
-        "tdmrp_m9k_ak47",
+        "weapon_tdmrp_cs_ak47",
         "tdmrp_m9k_amd65",
-        "tdmrp_m9k_vikhr",
+        "tdmrp_m9k_ak74",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
+        "tdmrp_m9k_colt1911",
         "tdmrp_m9k_coltpython",
         "tdmrp_m9k_m92beretta",
     },
@@ -257,12 +257,12 @@ TDMRP.LoadoutPools["thief"] = {
 -- Dr. Evil (Criminal medic)
 TDMRP.LoadoutPools["drevil"] = {
     Primary = {
-        "tdmrp_m9k_mp5",
-        "tdmrp_m9k_bizonpp19",
-        "tdmrp_m9k_mp7",
+        "tdmrp_m9k_mp5sd",
+        "tdmrp_m9k_bizonp19",
+        "weapon_tdmrp_cs_p90",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
+        "tdmrp_m9k_colt1911",
         "tdmrp_m9k_m92beretta",
     },
     Gear = {
@@ -274,7 +274,7 @@ TDMRP.LoadoutPools["drevil"] = {
 -- Merchant of Death (Criminal gun dealer)
 TDMRP.LoadoutPools["merchantofdeath"] = {
     Primary = {
-        "tdmrp_m9k_ak47",
+        "weapon_tdmrp_cs_ak47",
         "tdmrp_m9k_amd65",
         "tdmrp_m9k_fal",
     },
@@ -292,7 +292,7 @@ TDMRP.LoadoutPools["merchantofdeath"] = {
 TDMRP.LoadoutPools["mercenary"] = {
     Primary = {
         "tdmrp_m9k_spas12",
-        "tdmrp_m9k_striker12",
+        "tdmrp_m9k_1887winchester",
         "tdmrp_m9k_jackhammer",
     },
     Secondary = {
@@ -309,13 +309,13 @@ TDMRP.LoadoutPools["mercenary"] = {
 -- Deadeye (Sniper)
 TDMRP.LoadoutPools["deadeye"] = {
     Primary = {
-        "tdmrp_m9k_m24",
-        "tdmrp_m9k_dragunov",
+        "tdmrp_m9k_intervention",
         "tdmrp_m9k_barret_m82",
+        "weapon_tdmrp_cs_awp",
     },
     Secondary = {
-        "tdmrp_m9k_glock",
-        "tdmrp_m9k_usp",
+        "tdmrp_m9k_colt1911",
+        "weapon_tdmrp_cs_usp",
         "tdmrp_m9k_m92beretta",
     },
     Gear = {
@@ -327,7 +327,7 @@ TDMRP.LoadoutPools["deadeye"] = {
 -- Yamakazi (Glass cannon - knives + pistols)
 TDMRP.LoadoutPools["yamakazi"] = {
     Primary = {
-        "tdmrp_m9k_knife",  -- Primary knife!
+        "weapon_tdmrp_cs_knife",  -- Primary knife!
     },
     Secondary = {
         "tdmrp_m9k_deagle",
@@ -343,9 +343,9 @@ TDMRP.LoadoutPools["yamakazi"] = {
 -- Raider (Auto shotgun specialist)
 TDMRP.LoadoutPools["raider"] = {
     Primary = {
-        "tdmrp_m9k_striker12",
+        "tdmrp_m9k_spas12",
         "tdmrp_m9k_jackhammer",
-        "tdmrp_m9k_usas",
+        "weapon_tdmrp_cs_pumpshotgun",
     },
     Secondary = {
         "tdmrp_m9k_deagle",
@@ -353,7 +353,7 @@ TDMRP.LoadoutPools["raider"] = {
     },
     Gear = {
         "weapon_frag",
-        "weapon_frag",
+        "weapon_flashbang",
     },
 }
 
@@ -361,8 +361,8 @@ TDMRP.LoadoutPools["raider"] = {
 TDMRP.LoadoutPools["tank"] = {
     Primary = {
         "tdmrp_m9k_m249lmg",
-        "tdmrp_m9k_pkm",
         "tdmrp_m9k_m60",
+        "weapon_tdmrp_cs_aug",
     },
     Secondary = {
         "tdmrp_m9k_deagle",
@@ -377,8 +377,8 @@ TDMRP.LoadoutPools["tank"] = {
 -- Mob Boss (Support/Command)
 TDMRP.LoadoutPools["mobboss"] = {
     Primary = {
-        "tdmrp_m9k_ak47",
-        "tdmrp_m9k_mp5",
+        "weapon_tdmrp_cs_ak47",
+        "tdmrp_m9k_mp5sd",
         "tdmrp_m9k_fal",
     },
     Secondary = {
@@ -395,7 +395,7 @@ TDMRP.LoadoutPools["mobboss"] = {
 TDMRP.LoadoutPools["dukenukem"] = {
     Primary = {
         "tdmrp_m9k_spas12",
-        "tdmrp_m9k_striker12",
+        "tdmrp_m9k_jackhammer",
         "tdmrp_m9k_m249lmg",
     },
     Secondary = {

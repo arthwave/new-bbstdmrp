@@ -414,6 +414,66 @@ TDMRP.Accuracy.WeaponStats = {
         baseSpread = 0.042,      -- Russian general purpose
         movePenalty = 7.5,       -- 7.62x54R belt-fed
     },
+    
+    ----------------------------------------------------
+    -- CSS WEAPONS - Counter-Strike Source weapon stats
+    ----------------------------------------------------
+    ["weapon_tdmrp_cs_m4a1"] = {
+        baseSpread = 0.018,      -- M4A1 Carbine
+        movePenalty = 4.0,       -- Standard assault rifle
+    },
+    ["weapon_tdmrp_cs_ak47"] = {
+        baseSpread = 0.025,      -- Classic AK spread
+        movePenalty = 4.5,       -- Heavy but iconic
+    },
+    ["weapon_tdmrp_cs_deagle"] = {
+        baseSpread = 0.016,      -- Desert Eagle
+        movePenalty = 3.5,       -- Heavy pistol
+    },
+    ["weapon_tdmrp_cs_elites"] = {
+        baseSpread = 0.022,      -- Dual Elites
+        movePenalty = 2.8,       -- Light akimbo pistols
+    },
+    ["weapon_tdmrp_cs_pumpshotgun"] = {
+        baseSpread = 0.08,       -- Pump Shotgun
+        movePenalty = 4.0,       -- Typical shotgun handling
+    },
+    ["weapon_tdmrp_cs_famas"] = {
+        baseSpread = 0.020,      -- FAMAS burst rifle
+        movePenalty = 3.8,       -- Bullpup design
+    },
+    ["weapon_tdmrp_cs_galil"] = {
+        baseSpread = 0.024,      -- Galil
+        movePenalty = 4.2,       -- Israeli AK variant
+    },
+    ["weapon_tdmrp_cs_glock"] = {
+        baseSpread = 0.020,      -- Glock 18
+        movePenalty = 2.0,       -- Light polymer pistol
+    },
+    ["weapon_tdmrp_cs_mac10"] = {
+        baseSpread = 0.038,      -- MAC-10 spray
+        movePenalty = 2.5,       -- Compact SMG
+    },
+    ["weapon_tdmrp_cs_mp5"] = {
+        baseSpread = 0.022,      -- MP5 precision SMG
+        movePenalty = 2.6,       -- Classic 9mm SMG
+    },
+    ["weapon_tdmrp_cs_p90"] = {
+        baseSpread = 0.026,      -- P90 PDW
+        movePenalty = 2.4,       -- Bullpup SMG
+    },
+    ["weapon_tdmrp_cs_awp"] = {
+        baseSpread = 0.001,      -- AWP precision
+        movePenalty = 9.0,       -- Heavy sniper
+    },
+    ["weapon_tdmrp_cs_scout"] = {
+        baseSpread = 0.002,      -- Scout bolt action
+        movePenalty = 5.5,       -- Light sniper
+    },
+    ["weapon_tdmrp_cs_m249"] = {
+        baseSpread = 0.045,      -- M249 LMG
+        movePenalty = 7.5,       -- Belt-fed suppression
+    },
 }
 
 ----------------------------------------------------
@@ -430,6 +490,9 @@ function TDMRP.Accuracy.GetBaseClass(wep)
         return string.sub(className, 7)  -- Remove "tdmrp_" prefix
     elseif string.StartWith(className, "m9k_") then
         return className
+    elseif string.StartWith(className, "weapon_tdmrp_cs_") then
+        -- CSS weapons use weapon_tdmrp_cs_xxx format
+        return className  -- Return full class for CSS-specific lookup
     end
     
     return nil
@@ -458,7 +521,7 @@ function TDMRP.Accuracy.GetWeaponType(wep)
     local ammoType = wep.Primary and wep.Primary.Ammo or ""
     local base = wep.Base or ""
     
-    -- Explicit sniper list (all M9K snipers)
+    -- Explicit sniper list (M9K and CSS snipers)
     local sniperList = {
         ["m9k_aw50"] = true,
         ["m9k_barret_m82"] = true,
@@ -472,6 +535,9 @@ function TDMRP.Accuracy.GetWeaponType(wep)
         ["m9k_sl8"] = true,
         ["m9k_svt40"] = true,
         ["m9k_svu"] = true,
+        -- CSS snipers
+        ["weapon_tdmrp_cs_awp"] = true,
+        ["weapon_tdmrp_cs_scout"] = true,
     }
     
     -- Check for sniper by explicit list first
@@ -479,10 +545,11 @@ function TDMRP.Accuracy.GetWeaponType(wep)
         return "sniper"
     end
     
-    -- Check for shotgun
+    -- Check for shotgun (including CSS shotguns)
     if TDMRP.Accuracy.Config.shotgunAmmoTypes[ammoType] or 
        string.find(base, "shotty") or
-       string.find(string.lower(class), "shotgun") then
+       string.find(string.lower(class), "shotgun") or
+       string.find(string.lower(class), "pumpshotgun") then
         return "shotgun"
     end
     

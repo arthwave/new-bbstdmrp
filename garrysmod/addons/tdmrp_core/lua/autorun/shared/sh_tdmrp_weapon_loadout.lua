@@ -1,6 +1,6 @@
 ----------------------------------------------------
 -- TDMRP Weapon Loadout System
--- Manages 60-weapon arsenal (18 CS:S + 42 M9K)
+-- Manages 63-weapon arsenal (21 CS:S + 42 M9K)
 -- Filters shop, spawns, and loot to active weapons only
 ----------------------------------------------------
 
@@ -8,91 +8,98 @@ if SERVER then
     AddCSLuaFile()
 end
 
--- Explicitly define the 60 active weapons for the server
+-- CRITICAL: ALL weapon classes MUST be the TDMRP wrappers
+-- CSS = weapon_tdmrp_cs_*
+-- M9K = tdmrp_m9k_*
+-- NEVER use base m9k_* classes in this list!
+
 TDMRP = TDMRP or {}
 
 TDMRP.ActiveWeaponLoadout = {
-    -- CSS WEAPONS (18) - All wrappers
+    ----------------------------------------------------
+    -- CSS WEAPONS (21) - weapon_tdmrp_cs_*
+    ----------------------------------------------------
+    -- Pistols (6)
     "weapon_tdmrp_cs_glock18",
     "weapon_tdmrp_cs_usp",
     "weapon_tdmrp_cs_p228",
     "weapon_tdmrp_cs_five_seven",
     "weapon_tdmrp_cs_elites",
     "weapon_tdmrp_cs_desert_eagle",
+    -- SMGs (5)
     "weapon_tdmrp_cs_mp5a5",
     "weapon_tdmrp_cs_p90",
     "weapon_tdmrp_cs_mac10",
     "weapon_tdmrp_cs_tmp",
     "weapon_tdmrp_cs_ump_45",
+    -- Rifles (6)
     "weapon_tdmrp_cs_ak47",
     "weapon_tdmrp_cs_m4a1",
     "weapon_tdmrp_cs_aug",
     "weapon_tdmrp_cs_famas",
     "weapon_tdmrp_cs_sg552",
+    "weapon_tdmrp_cs_galil",
+    -- Shotgun (1)
     "weapon_tdmrp_cs_pumpshotgun",
+    -- Snipers (2)
     "weapon_tdmrp_cs_awp",
+    "weapon_tdmrp_cs_scout",
+    -- Melee (1)
     "weapon_tdmrp_cs_knife",
     
-    -- M9K WEAPONS (42) - Extracted from addons
+    ----------------------------------------------------
+    -- M9K WEAPONS (42) - tdmrp_m9k_* (only those with valid bases)
+    ----------------------------------------------------
     -- Pistols (5)
-    "m9k_colt1911",
-    "m9k_hk45",
-    "m9k_m92beretta",
-    "m9k_sig_p229r",
-    "m9k_luger",
-    
+    "tdmrp_m9k_colt1911",
+    "tdmrp_m9k_hk45",
+    "tdmrp_m9k_m92beretta",
+    "tdmrp_m9k_sig_p229r",
+    "tdmrp_m9k_luger",
     -- Revolvers (6)
-    "m9k_coltpython",
-    "m9k_deagle",
-    "m9k_m29satan",
-    "m9k_model500",
-    "m9k_ragingbull",
-    "m9k_model627",
-    
-    -- SMGs (5)
-    "m9k_mp5sd",
-    "m9k_mp7",
-    "m9k_thompson",
-    "m9k_uzi",
-    "m9k_mp40",
-    
+    "tdmrp_m9k_coltpython",
+    "tdmrp_m9k_deagle",
+    "tdmrp_m9k_m29satan",
+    "tdmrp_m9k_model500",
+    "tdmrp_m9k_ragingbull",
+    "tdmrp_m9k_model627",
+    -- SMGs (8)
+    "tdmrp_m9k_mp5sd",
+    "tdmrp_m9k_mp7",
+    "tdmrp_m9k_thompson",
+    "tdmrp_m9k_uzi",
+    "tdmrp_m9k_mp40",
+    "tdmrp_m9k_mp9",
+    "tdmrp_m9k_bizonp19",
     -- PDWs (3)
-    "m9k_honeybadger",
-    "m9k_vector",
-    "m9k_magpulpdr",
-    
-    -- Rifles (13)
-    "m9k_an94",
-    "m9k_fal",
-    "m9k_g36",
-    "m9k_l85",
-    "m9k_m416",
-    "m9k_scar",
-    "m9k_tar21",
-    "m9k_val",
-    "m9k_ak74",
-    "m9k_amd65",
-    "m9k_f2000",
-    "m9k_g3a3",
-    "m9k_m16a4_acog",
-    "m9k_acr",
-    
+    "tdmrp_m9k_honeybadger",
+    "tdmrp_m9k_vector",
+    "tdmrp_m9k_magpulpdr",
+    -- Rifles (14)
+    "tdmrp_m9k_an94",
+    "tdmrp_m9k_fal",
+    "tdmrp_m9k_g36",
+    "tdmrp_m9k_l85",
+    "tdmrp_m9k_m416",
+    "tdmrp_m9k_scar",
+    "tdmrp_m9k_tar21",
+    "tdmrp_m9k_val",
+    "tdmrp_m9k_ak74",
+    "tdmrp_m9k_amd65",
+    "tdmrp_m9k_f2000",
+    "tdmrp_m9k_g3a3",
+    "tdmrp_m9k_m16a4_acog",
+    "tdmrp_m9k_acr",
     -- Shotguns (3)
-    "m9k_spas12",
-    "m9k_1887winchester",
-    "m9k_jackhammer",
-    
+    "tdmrp_m9k_spas12",
+    "tdmrp_m9k_1887winchester",
+    "tdmrp_m9k_jackhammer",
     -- Snipers (2)
-    "m9k_intervention",
-    "m9k_barret_m82",
-    
-    -- LMGs (2)
-    "m9k_m249lmg",
-    "m9k_m60",
-    
-    -- Misc (2)
-    "m9k_mp9",
-    "m9k_bizonp19",
+    "tdmrp_m9k_intervention",
+    "tdmrp_m9k_barret_m82",
+    -- LMGs (3)
+    "tdmrp_m9k_m249lmg",
+    "tdmrp_m9k_m60",
 }
 
 -- Build lookup table for fast checking

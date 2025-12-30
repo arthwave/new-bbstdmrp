@@ -11,6 +11,11 @@ SWEP.DrawCrosshair = true
 SWEP.Spawnable = false
 SWEP.AdminSpawnable = false
 
+-- CSS c_* viewmodels are "clean" models that need GMod to render hands
+-- UseHands = true tells GMod to add player's c_arms model
+SWEP.UseHands = true
+SWEP.ViewModelFOV = 65
+
 SWEP.Primary = {}
 SWEP.Primary.Damage = 20
 SWEP.Primary.RPM = 600

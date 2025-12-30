@@ -28,8 +28,10 @@ local CSS_WEAPONS = {
     ["weapon_tdmrp_cs_aug"] = { name = "AUG", basePrice = 4000, type = "rifle" },
     ["weapon_tdmrp_cs_famas"] = { name = "FAMAS", basePrice = 2800, type = "rifle" },
     ["weapon_tdmrp_cs_sg552"] = { name = "SG552", basePrice = 3600, type = "rifle" },
+    ["weapon_tdmrp_cs_galil"] = { name = "Galil", basePrice = 3200, type = "rifle" },
     ["weapon_tdmrp_cs_pumpshotgun"] = { name = "Pump Shotgun", basePrice = 2000, type = "shotgun" },
     ["weapon_tdmrp_cs_awp"] = { name = "AWP", basePrice = 6000, type = "sniper" },
+    ["weapon_tdmrp_cs_scout"] = { name = "Scout", basePrice = 4000, type = "sniper" },
     ["weapon_tdmrp_cs_knife"] = { name = "Knife", basePrice = 100, type = "melee" },
 }
 
@@ -148,17 +150,33 @@ net.Receive("TDMRP_BuyWeapon", function(_, ply)
         price = meta.basePrice or 0
     else
         -- M9K weapon - need to look up in registry
-        if not TDMRP.M9KRegistry or not TDMRP.M9KRegistry[weaponClass] then
+        -- Client sends tdmrp_m9k_*, but registry uses m9k_* keys
+        local registryKey = weaponClass
+        if string.sub(weaponClass, 1, 10) == "tdmrp_m9k_" then
+            -- Convert tdmrp_m9k_ak47 -> m9k_ak47 for registry lookup
+            registryKey = string.sub(weaponClass, 7) -- Remove "tdmrp_" prefix
+            tdmrpClass = weaponClass -- The class to give is already correct
+        else
+            -- If somehow m9k_* was sent, convert to tdmrp_m9k_*
+            tdmrpClass = GetTDMRPClass(weaponClass)
+        end
+        
+        if not TDMRP.M9KRegistry or not TDMRP.M9KRegistry[registryKey] then
             ply:ChatPrint("[TDMRP] Unknown M9K weapon: " .. tostring(weaponClass))
+            print("[TDMRP Shop] Registry lookup failed for: " .. tostring(registryKey))
             return
         end
-        meta = TDMRP.M9KRegistry[weaponClass]
-        tdmrpClass = GetTDMRPClass(weaponClass)
+        meta = TDMRP.M9KRegistry[registryKey]
+        if not tdmrpClass then
+            tdmrpClass = GetTDMRPClass(registryKey)
+        end
         price = meta.basePrice or 0
     end
     
     -- Validate weapon is in active loadout (60-weapon filter)
-    if TDMRP.IsActiveWeapon then
+    -- CSS weapons are already validated via CSS_WEAPONS registry
+    -- M9K weapons need to be checked against active loadout
+    if not isCSS and TDMRP.IsActiveWeapon then
         if not TDMRP.IsActiveWeapon(weaponClass) and not TDMRP.IsActiveWeapon(tdmrpClass) then
             ply:ChatPrint("[TDMRP] This weapon is not available in the current loadout.")
             return

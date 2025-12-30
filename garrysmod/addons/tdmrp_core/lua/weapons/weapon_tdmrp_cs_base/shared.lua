@@ -25,40 +25,57 @@ SWEP.Primary.DefaultClip = 30
 SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "pistol"
 
+-- Flag to prevent recursion
+local initializingWeapon = {}
+
 function SWEP:Initialize()
-    -- Call base class Initialize
-    if self.BaseClass and self.BaseClass.Initialize then
-        self.BaseClass.Initialize(self)
-    end
+    -- Prevent stack overflow from recursive calls
+    local id = tostring(self)
+    if initializingWeapon[id] then return end
+    initializingWeapon[id] = true
+    
+    -- Set weapon hold type (this is all weapon_real_base does in Initialize)
+    self:SetWeaponHoldType(self.HoldType or "pistol")
     
     -- Apply TDMRP mixin system for tier scaling
     if TDMRP_WeaponMixin and TDMRP_WeaponMixin.Setup then
         TDMRP_WeaponMixin.Setup(self)
     end
+    
+    initializingWeapon[id] = nil
 end
 
+local deployingWeapon = {}
+
 function SWEP:Deploy()
-    if self.BaseClass and self.BaseClass.Deploy then
-        self.BaseClass.Deploy(self)
-    end
+    -- Prevent stack overflow from recursive calls
+    local id = tostring(self)
+    if deployingWeapon[id] then return true end
+    deployingWeapon[id] = true
     
     -- Set networked stats for HUD
     if SERVER and TDMRP_WeaponMixin and TDMRP_WeaponMixin.SetNetworkedStats then
         TDMRP_WeaponMixin.SetNetworkedStats(self)
     end
     
+    deployingWeapon[id] = nil
     return true
 end
 
+local equippingWeapon = {}
+
 function SWEP:Equip(newOwner)
-    if self.BaseClass and self.BaseClass.Equip then
-        self.BaseClass.Equip(self, newOwner)
-    end
+    -- Prevent stack overflow from recursive calls  
+    local id = tostring(self)
+    if equippingWeapon[id] then return end
+    equippingWeapon[id] = true
     
     -- Reapply mixin on equip
     if SERVER and TDMRP_WeaponMixin and TDMRP_WeaponMixin.Setup then
         TDMRP_WeaponMixin.Setup(self)
     end
+    
+    equippingWeapon[id] = nil
 end
 
 function SWEP:SetTier(newTier)

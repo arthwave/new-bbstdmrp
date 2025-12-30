@@ -9,145 +9,188 @@ TDMRP.JobLoadouts = TDMRP.JobLoadouts or {}
 ----------------------------------------------------
 -- Job Loadout Definitions
 -- Format: {sidearm = "class", primary = "class", knife = true (optional)}
+-- ALL CLASSES MUST BE TDMRP wrappers (tdmrp_m9k_* or weapon_tdmrp_cs_*)
 ----------------------------------------------------
 
 TDMRP.JobLoadouts = {
+    ----------------------------------------------------
     -- POLICE JOBS (sorted by BP requirement / power level)
+    ----------------------------------------------------
+    
+    -- STARTER (0 BP, locked after 60)
     ["Police Recruit"] = {
-        sidearm = "weapon_real_cs_usp",           -- Basic pistol
-        primary = "weapon_real_cs_mp5a5"          -- Basic SMG
-    },
-    ["SWAT"] = {
-        sidearm = "weapon_real_cs_p228",          -- Decent pistol
-        primary = "weapon_real_cs_pumpshotgun"    -- CQC shotgun
-    },
-    ["Spetznatz"] = {
-        sidearm = "weapon_real_cs_usp",
-        primary = "weapon_real_cs_scout"          -- Sniper
-    },
-    ["Police Medic"] = {
-        sidearm = "weapon_real_cs_usp",
-        primary = "weapon_real_cs_famas"          -- Mid-tier rifle
-    },
-    ["Marine"] = {
-        sidearm = "weapon_real_cs_five-seven",    -- Better pistol
-        primary = "weapon_real_cs_m4a1"           -- Solid rifle
-    },
-    ["Quartermaster"] = {
-        sidearm = "weapon_real_cs_five-seven",
-        primary = "weapon_real_cs_m4a1"
-    },
-    ["Vanguard"] = {
-        sidearm = "weapon_real_cs_desert_eagle",  -- High-damage pistol
-        primary = "weapon_real_cs_xm1014"         -- Auto shotgun
-    },
-    ["Stealth Unit"] = {
-        sidearm = "weapon_real_cs_usp",
-        primary = "weapon_real_cs_scout"          -- Sniper for stealth
-    },
-    ["Armored Unit"] = {
-        sidearm = "weapon_real_cs_desert_eagle",
-        primary = "weapon_real_cs_m249"           -- Heavy LMG
-    },
-    ["Jill Valentine"] = {
-        sidearm = "weapon_real_cs_desert_eagle",
-        primary = "weapon_real_cs_aug"            -- Elite rifle
-    },
-    ["Mayor"] = {
-        sidearm = "weapon_real_cs_five-seven",
-        primary = "weapon_real_cs_famas"
+        sidearm = "weapon_tdmrp_cs_usp",           -- Basic reliable pistol
+        primary = "weapon_tdmrp_cs_mp5a5"          -- Classic SMG
     },
     
+    -- TIER 2 (60 BP)
+    ["SWAT"] = {
+        sidearm = "tdmrp_m9k_hk45",                -- Tactical pistol
+        primary = "weapon_tdmrp_cs_m4a1"          -- Standard issue rifle
+    },
+    ["Field Surgeon"] = {
+        sidearm = "weapon_tdmrp_cs_p228",         -- Compact sidearm
+        primary = "weapon_tdmrp_cs_famas"         -- Burst rifle for support
+    },
+    ["Armsmaster"] = {
+        sidearm = "tdmrp_m9k_sig_p229r",          -- Reliable pistol
+        primary = "tdmrp_m9k_m416"                -- Versatile rifle
+    },
+    
+    -- TIER 3 (100 BP)
+    ["Marine"] = {
+        sidearm = "weapon_tdmrp_cs_desert_eagle", -- High-damage pistol
+        primary = "tdmrp_m9k_scar"                -- Battle rifle
+    },
+    ["Special Forces"] = {
+        sidearm = "tdmrp_m9k_colt1911",           -- Classic sidearm
+        primary = "weapon_tdmrp_cs_scout"         -- Sniper for precision
+    },
+    
+    -- TIER 4 (120 BP)
+    ["Recon"] = {
+        sidearm = "weapon_tdmrp_cs_five_seven",   -- Armor-piercing pistol
+        primary = "tdmrp_m9k_honeybadger"         -- Suppressed PDW for stealth
+    },
+    
+    -- BP LOSS ZONE
+    ["Vanguard"] = {
+        sidearm = "tdmrp_m9k_deagle",             -- Hand cannon
+        primary = "weapon_tdmrp_cs_aug"           -- Scoped assault rifle
+    },
+    ["Armored Unit"] = {
+        sidearm = "tdmrp_m9k_model500",           -- Massive revolver
+        primary = "tdmrp_m9k_m249lmg"             -- LMG for suppression
+    },
+    ["Mayor"] = {
+        sidearm = "tdmrp_m9k_coltpython",         -- Elegant revolver
+        primary = "weapon_tdmrp_cs_sg552"         -- Scoped commando rifle
+    },
+    
+    -- ELITE (1000 BP)
+    ["Master Chief"] = {
+        sidearm = "tdmrp_m9k_m29satan",           -- Satan's Hand
+        primary = "tdmrp_m9k_barret_m82"          -- Anti-materiel rifle
+    },
+    
+    ----------------------------------------------------
     -- CRIMINAL JOBS (sorted by BP requirement / power level)
-    ["Gangster"] = {
-        sidearm = "weapon_real_cs_glock18",       -- Basic pistol
-        primary = "weapon_real_cs_mac10"          -- Basic SMG
+    ----------------------------------------------------
+    
+    -- STARTER (0 BP, locked after 60)
+    ["Gangster Initiate"] = {
+        sidearm = "weapon_tdmrp_cs_glock18",      -- Street pistol
+        primary = "weapon_tdmrp_cs_mac10"         -- Cheap SMG
     },
+    
+    -- TIER 2 (60 BP)
     ["Thief"] = {
-        sidearm = "weapon_real_cs_glock18",
-        primary = "weapon_real_cs_tmp"            -- Stealth SMG
+        sidearm = "weapon_tdmrp_cs_p228",         -- Compact for stealth
+        primary = "weapon_tdmrp_cs_tmp"           -- Silent SMG
     },
+    ["Dr. Evil"] = {
+        sidearm = "weapon_tdmrp_cs_usp",          -- Silenced pistol
+        primary = "weapon_tdmrp_cs_galil"         -- Budget rifle
+    },
+    ["Merchant of Death"] = {
+        sidearm = "tdmrp_m9k_hk45",               -- Quality sidearm
+        primary = "weapon_tdmrp_cs_ak47"          -- Classic AK
+    },
+    
+    -- TIER 3 (100 BP)
+    ["Mercenary"] = {
+        sidearm = "weapon_tdmrp_cs_desert_eagle", -- Hand cannon
+        primary = "tdmrp_m9k_an94"                -- Russian precision rifle
+    },
+    ["Deadeye"] = {
+        sidearm = "tdmrp_m9k_luger",              -- Classic pistol
+        primary = "tdmrp_m9k_intervention"        -- Sniper rifle
+    },
+    
+    -- TIER 4 (120 BP)
     ["Yamakazi"] = {
-        sidearm = "weapon_real_cs_elites",        -- Fast dual pistols
-        primary = "weapon_real_cs_p90",           -- Fast SMG
-        knife = true                              -- Special knife
+        sidearm = "weapon_tdmrp_cs_elites",       -- Dual pistols
+        primary = "weapon_tdmrp_cs_p90",          -- High-cap SMG
+        knife = true                              -- Throwing knife
     },
-    ["Terrorist Sniper"] = {
-        sidearm = "weapon_real_cs_glock18",
-        primary = "weapon_real_cs_g3sg1"          -- Sniper
-    },
-    ["Rogue Medic"] = {
-        sidearm = "weapon_real_cs_p228",
-        primary = "weapon_real_cs_galil"          -- Mid-tier rifle
-    },
-    ["Trafficker"] = {
-        sidearm = "weapon_real_cs_five-seven",
-        primary = "weapon_real_cs_ak47"           -- Classic rifle
-    },
-    ["Terrorist"] = {
-        sidearm = "weapon_real_cs_p228",
-        primary = "weapon_real_cs_ak47"
-    },
-    ["The Big Cheese"] = {
-        sidearm = "weapon_real_cs_desert_eagle",
-        primary = "weapon_real_cs_m249"           -- Heavy LMG
-    },
+    
+    -- BP LOSS ZONE
     ["Raider"] = {
-        sidearm = "weapon_real_cs_desert_eagle",
-        primary = "weapon_real_cs_xm1014"         -- Auto shotgun
+        sidearm = "tdmrp_m9k_ragingbull",         -- Massive revolver
+        primary = "tdmrp_m9k_jackhammer"          -- Auto shotgun
     },
-    ["T.A.N.K"] = {
-        sidearm = "weapon_real_cs_desert_eagle",
-        primary = "weapon_real_cs_m249"
+    ["T.A.N.K."] = {
+        sidearm = "tdmrp_m9k_model627",           -- Sturdy revolver
+        primary = "tdmrp_m9k_m60"                 -- General purpose MG
     },
     ["Mob Boss"] = {
-        sidearm = "weapon_real_cs_five-seven",
-        primary = "weapon_real_cs_sg552"          -- Elite rifle
+        sidearm = "tdmrp_m9k_coltpython",         -- Stylish revolver
+        primary = "tdmrp_m9k_val"                 -- Suppressed rifle
+    },
+    
+    -- ELITE (1000 BP)
+    ["Duke Nukem"] = {
+        sidearm = "tdmrp_m9k_m29satan",           -- Satan's Hand
+        primary = "tdmrp_m9k_m60"                 -- M60 LMG - "Hail to the king, baby!"
     },
 }
 
 ----------------------------------------------------
 -- Helper: Create weapon instance at random tier (1-4)
+-- Handles both tdmrp_m9k_* and weapon_tdmrp_cs_* classes
 ----------------------------------------------------
 local function CreateRandomTierWeapon(className)
-    -- Convert to registry key if needed and check M9K registry
-    local regKey = TDMRP.GetRegistryKey and TDMRP.GetRegistryKey(className) or className
-    if not TDMRP.M9KRegistry or not TDMRP.M9KRegistry[regKey] then
-        print("[TDMRP Loadouts] WARNING: Unknown weapon class: " .. tostring(className))
-        return nil
+    -- Determine weapon type
+    local isCSS = string.sub(className, 1, 16) == "weapon_tdmrp_cs_"
+    local isTDMRPM9K = string.sub(className, 1, 10) == "tdmrp_m9k_"
+    local isBaseM9K = string.sub(className, 1, 4) == "m9k_"
+    
+    -- Convert base m9k_ to tdmrp_m9k_ if needed
+    if isBaseM9K and not isTDMRPM9K then
+        className = "tdmrp_" .. className
+        isTDMRPM9K = true
     end
     
     -- Random tier 1-4
     local tier = math.random(1, 4)
     
-    -- Use the proper TDMRP instance creation function (same as shop)
-    if TDMRP.NewWeaponInstance then
-        local inst = TDMRP.NewWeaponInstance(className, tier)
-        print("[TDMRP Loadouts] Created instance via NewWeaponInstance: tier=" .. tier .. ", finalDmg=" .. (inst.finalDamage or 0))
-        return inst
-    else
-        -- Fallback: manual instance creation with computed stats
-        local finalStats = TDMRP.ComputeFinalStats and TDMRP.ComputeFinalStats(className, tier, nil) or {}
-        
-        local instance = {
-            class = className,
-            tier = tier,
-            prefixID = nil,
-            suffixID = nil,
-            -- Calculated final stats for ApplyInstanceToSWEP
-            finalDamage = finalStats.damage or 0,
-            finalRPM = finalStats.rpm or 0,
-            finalRecoil = finalStats.recoil or 0,
-            finalSpread = finalStats.spread or 0,
-        }
-        
-        print("[TDMRP Loadouts] Created manual instance: tier=" .. tier .. ", finalDmg=" .. instance.finalDamage)
-        return instance
+    -- For M9K weapons, check registry
+    if isTDMRPM9K then
+        local regKey = string.gsub(className, "^tdmrp_", "")  -- m9k_xxx
+        if TDMRP.M9KRegistry and not TDMRP.M9KRegistry[regKey] then
+            print("[TDMRP Loadouts] WARNING: Unknown M9K weapon class: " .. tostring(className))
+            -- Still allow it to be created - may work anyway
+        end
     end
+    
+    -- Create instance
+    local instance = {
+        class = className,
+        tier = tier,
+        prefixID = nil,
+        suffixID = nil,
+        finalDamage = 0,
+        finalRPM = 0,
+        finalRecoil = 0,
+        finalSpread = 0,
+    }
+    
+    -- Try to compute final stats if system available
+    if TDMRP.ComputeFinalStats then
+        local finalStats = TDMRP.ComputeFinalStats(className, tier, nil)
+        instance.finalDamage = finalStats.damage or 0
+        instance.finalRPM = finalStats.rpm or 0
+        instance.finalRecoil = finalStats.recoil or 0
+        instance.finalSpread = finalStats.spread or 0
+    end
+    
+    print("[TDMRP Loadouts] Created instance: " .. className .. " (Tier " .. tier .. ")")
+    return instance
 end
 
 ----------------------------------------------------
 -- Helper: Give weapon instance to player
+-- Works with both tdmrp_m9k_* and weapon_tdmrp_cs_*
 ----------------------------------------------------
 local function GiveWeaponInstance(ply, instance)
     if not IsValid(ply) or not instance then return end
@@ -158,16 +201,24 @@ local function GiveWeaponInstance(ply, instance)
         return
     end
     
-    -- Apply instance to weapon (sets tier, stats, NWInts for HUD)
+    -- Set tier directly
+    wep.Tier = instance.tier or 1
+    
+    -- Apply mixin setup
+    if TDMRP_WeaponMixin and TDMRP_WeaponMixin.Setup then
+        TDMRP_WeaponMixin.Setup(wep)
+    end
+    
+    -- Apply instance if system available
     if TDMRP.ApplyInstanceToSWEP then
         TDMRP.ApplyInstanceToSWEP(wep, instance)
     end
     
-    -- Store instance ID for tracking (optional, for future features)
+    -- Store instance ID for tracking
     local instanceID = math.random(1000, 65535)
     wep:SetNWInt("TDMRP_InstanceID", instanceID)
     
-    print("[TDMRP Loadouts] Gave " .. ply:Nick() .. " a tier-" .. instance.tier .. " " .. instance.class)
+    print("[TDMRP Loadouts] Gave " .. ply:Nick() .. " a Tier " .. instance.tier .. " " .. instance.class)
 end
 
 ----------------------------------------------------
@@ -214,24 +265,54 @@ local AMMO_FALLBACK = {
 
 ----------------------------------------------------
 -- Give ammo for weapon type
+-- Works with both tdmrp_m9k_* and weapon_tdmrp_cs_*
 ----------------------------------------------------
 local function GiveWeaponAmmo(ply, className)
     if not IsValid(ply) or not className then return end
     
     -- Get weapon metadata to determine type
-    local meta = TDMRP.GetWeaponMeta(className)
+    local meta = nil
+    local isCSS = string.sub(className, 1, 16) == "weapon_tdmrp_cs_"
+    
+    if isCSS then
+        -- CSS weapon types (hardcoded since no registry)
+        local CSS_TYPES = {
+            ["weapon_tdmrp_cs_glock18"] = "pistol",
+            ["weapon_tdmrp_cs_usp"] = "pistol",
+            ["weapon_tdmrp_cs_p228"] = "pistol",
+            ["weapon_tdmrp_cs_five_seven"] = "pistol",
+            ["weapon_tdmrp_cs_elites"] = "pistol",
+            ["weapon_tdmrp_cs_desert_eagle"] = "pistol",
+            ["weapon_tdmrp_cs_mp5a5"] = "smg",
+            ["weapon_tdmrp_cs_p90"] = "smg",
+            ["weapon_tdmrp_cs_mac10"] = "smg",
+            ["weapon_tdmrp_cs_tmp"] = "smg",
+            ["weapon_tdmrp_cs_ump_45"] = "smg",
+            ["weapon_tdmrp_cs_ak47"] = "rifle",
+            ["weapon_tdmrp_cs_m4a1"] = "rifle",
+            ["weapon_tdmrp_cs_aug"] = "rifle",
+            ["weapon_tdmrp_cs_famas"] = "rifle",
+            ["weapon_tdmrp_cs_sg552"] = "rifle",
+            ["weapon_tdmrp_cs_galil"] = "rifle",
+            ["weapon_tdmrp_cs_pumpshotgun"] = "shotgun",
+            ["weapon_tdmrp_cs_awp"] = "sniper",
+            ["weapon_tdmrp_cs_scout"] = "sniper",
+            ["weapon_tdmrp_cs_knife"] = "melee",
+        }
+        meta = { type = CSS_TYPES[className] or "rifle" }
+    else
+        -- M9K weapon - try registry
+        local regKey = string.gsub(className, "^tdmrp_", "")
+        meta = TDMRP.GetWeaponMeta and TDMRP.GetWeaponMeta(regKey)
+        if not meta then
+            meta = TDMRP.M9KRegistry and TDMRP.M9KRegistry[regKey]
+        end
+    end
+    
     if not meta or not meta.type then 
-        print("[TDMRP Loadouts] No metadata for weapon: " .. className)
-        return 
+        print("[TDMRP Loadouts] No metadata for weapon: " .. className .. ", defaulting to rifle ammo")
+        meta = { type = "rifle" }
     end
-    
-    local ammoType = AMMO_MAP[meta.type]
-    if not ammoType then
-        print("[TDMRP Loadouts] No ammo mapping for weapon type: " .. meta.type)
-        return
-    end
-    
-    print("[TDMRP Loadouts] Giving ammo for " .. className .. " (type: " .. meta.type .. ", ammo: " .. ammoType .. ")")
     
     -- Get the weapon's actual ammo type from the SWEP
     local wep = ply:GetWeapon(className)
@@ -241,24 +322,22 @@ local function GiveWeaponAmmo(ply, className)
         ammoTypeName = wep.Primary.Ammo or "Pistol"
     end
     
-    -- Give ammo directly (3x magazine worth)
-    local ammoPerPack = 30 -- default amount per pack
-    
-    -- Adjust ammo per pack based on weapon type
+    -- Adjust ammo amount based on weapon type
+    local ammoPerPack = 30
     if meta.type == "pistol" then ammoPerPack = 20
     elseif meta.type == "smg" then ammoPerPack = 30
     elseif meta.type == "rifle" then ammoPerPack = 30
     elseif meta.type == "shotgun" then ammoPerPack = 8
     elseif meta.type == "sniper" then ammoPerPack = 10
     elseif meta.type == "lmg" then ammoPerPack = 100
-    elseif meta.type == "melee" then ammoPerPack = 1
+    elseif meta.type == "melee" then ammoPerPack = 5  -- Throwing knives
     end
     
     -- Give 3 packs worth of ammo
     local totalAmmo = ammoPerPack * 3
     ply:GiveAmmo(totalAmmo, ammoTypeName, true)
     
-    print("[TDMRP Loadouts] Gave " .. ply:Nick() .. " " .. totalAmmo .. " rounds of " .. ammoTypeName .. " for " .. className)
+    print("[TDMRP Loadouts] Gave " .. ply:Nick() .. " " .. totalAmmo .. " rounds of " .. ammoTypeName)
 end
 
 ----------------------------------------------------
@@ -289,15 +368,15 @@ local function GiveJobLoadout(ply)
     
     print("[TDMRP Loadouts] Giving loadout to " .. ply:Nick() .. " (" .. jobName .. ")")
     
-    -- Give knife first (if applicable)
+    -- Give knife first (if applicable) - uses TDMRP CSS knife
     if loadout.knife then
-        local knifeInstance = CreateRandomTierWeapon("weapon_real_cs_knife")
+        local knifeInstance = CreateRandomTierWeapon("weapon_tdmrp_cs_knife")
         if knifeInstance then
             GiveWeaponInstance(ply, knifeInstance)
-            -- Give ammo for knife
             timer.Simple(0.3, function()
                 if IsValid(ply) then
-                    GiveWeaponAmmo(ply, "weapon_real_cs_knife")
+                    -- Give throwing knife ammo (XBowBolt)
+                    ply:GiveAmmo(10, "XBowBolt", true)
                 end
             end)
         end
@@ -308,7 +387,6 @@ local function GiveJobLoadout(ply)
         local sidearmInstance = CreateRandomTierWeapon(loadout.sidearm)
         if sidearmInstance then
             GiveWeaponInstance(ply, sidearmInstance)
-            -- Give ammo for sidearm
             timer.Simple(0.4, function()
                 if IsValid(ply) then
                     GiveWeaponAmmo(ply, loadout.sidearm)
@@ -322,7 +400,6 @@ local function GiveJobLoadout(ply)
         local primaryInstance = CreateRandomTierWeapon(loadout.primary)
         if primaryInstance then
             GiveWeaponInstance(ply, primaryInstance)
-            -- Give ammo for primary
             timer.Simple(0.5, function()
                 if IsValid(ply) then
                     GiveWeaponAmmo(ply, loadout.primary)
@@ -342,7 +419,8 @@ local function GiveJobLoadout(ply)
 end
 
 ----------------------------------------------------
--- Hook: Give loadout on spawn
+-- Hook: Combat role spawn handling
+-- Combat roles get physgun + toolgun only, then select loadout via UI
 ----------------------------------------------------
 hook.Add("PlayerLoadout", "TDMRP_JobLoadouts", function(ply)
     local teamID = ply:Team()
@@ -351,11 +429,21 @@ hook.Add("PlayerLoadout", "TDMRP_JobLoadouts", function(ply)
     
     local jobClass = job.tdmrp_class
     
-    -- If cop or criminal, block default DarkRP loadout
+    -- Combat roles (cop/criminal): Block default DarkRP weapons
+    -- They will get physgun + toolgun, then select weapons via loadout UI
     if jobClass == "cop" or jobClass == "criminal" then
+        -- Give physgun and toolgun only
+        timer.Simple(0.1, function()
+            if not IsValid(ply) then return end
+            ply:Give("weapon_physgun")
+            ply:Give("gmod_tool")
+            ply:SelectWeapon("weapon_physgun")
+        end)
         -- Return true to block default DarkRP weapons
         return true
     end
+    
+    -- Civilians: Let DarkRP handle their loadout normally
 end)
 
 hook.Add("PlayerSpawn", "TDMRP_GiveJobLoadouts", function(ply)
@@ -367,15 +455,12 @@ hook.Add("PlayerSpawn", "TDMRP_GiveJobLoadouts", function(ply)
     local job = RPExtraTeams and RPExtraTeams[ply:Team()]
     local jobClass = job and job.tdmrp_class or "civilian"
     
-    -- Only give loadout for combat classes
-    -- Civilians keep their bound weapons (restored by spawn_orchestrator)
-    if jobClass == "cop" or jobClass == "criminal" then
-        timer.Simple(0.2, function()
-            if IsValid(ply) then
-                GiveJobLoadout(ply)
-            end
-        end)
-    end
+    -- Combat roles: DO NOT auto-give loadout
+    -- They will select weapons via the loadout UI (cl_tdmrp_loadout_ui.lua)
+    -- The loadout UI will trigger and they'll pick their weapons there
+    
+    -- Civilians keep their default DarkRP behavior
+    -- (restored by spawn_orchestrator if they have bound weapons)
 end)
 
 ----------------------------------------------------

@@ -18,7 +18,7 @@ local Config = {
     cardHeight = 160,
     cardPadding = 8,
     gridCols = 6,
-    infoPanelWidth = 280,
+    infoPanelWidth = 350,  -- Increased for longer descriptions
     scrollSpeed = 40,
 }
 
@@ -64,14 +64,14 @@ local function GetOrderedJobs()
         local cmdLower = string.lower(job.command or "")
         local catLower = string.lower(job.category or "")
         
-        -- Priority 1: Explicit TDMRP class override
+        -- Priority 1: Explicit TDMRP class override (ALWAYS takes precedence)
         if job.tdmrp_class then
             catId = job.tdmrp_class
         -- Priority 2: DarkRP's built-in police flag (most reliable)
         elseif job.police or job.chief or job.mayor then
             catId = "police"
         -- Priority 3: Category name detection
-        elseif catLower ~= "" then
+        elseif not job.tdmrp_class and catLower ~= "" then
             if string.find(catLower, "police") or string.find(catLower, "cop") or string.find(catLower, "law") or string.find(catLower, "government") or string.find(catLower, "civil protection") then
                 catId = "police"
             elseif string.find(catLower, "crim") or string.find(catLower, "gang") or string.find(catLower, "illegal") then
@@ -81,11 +81,11 @@ local function GetOrderedJobs()
             end
         end
         
-        -- Priority 4: Job name heuristics (if category didn't match)
-        if catId == "civilian" then
+        -- Priority 4: Job name heuristics (ONLY if no explicit tdmrp_class was set)
+        if not job.tdmrp_class and catId == "civilian" then
             if string.find(nameLower, "police") or string.find(nameLower, "cop") or string.find(nameLower, "officer") or string.find(nameLower, "swat") or string.find(nameLower, "chief") or string.find(nameLower, "mayor") or string.find(nameLower, "sheriff") or string.find(nameLower, "deputy") or string.find(nameLower, "fbi") or string.find(nameLower, "secret service") then
                 catId = "police"
-            elseif string.find(nameLower, "thief") or string.find(nameLower, "gang") or string.find(nameLower, "mob") or string.find(nameLower, "hitman") or string.find(nameLower, "terrorist") or string.find(nameLower, "criminal") or string.find(nameLower, "dealer") or string.find(nameLower, "kidnapper") or string.find(nameLower, "raider") then
+            elseif string.find(nameLower, "thief") or string.find(nameLower, "gang") or string.find(nameLower, "mob") or string.find(nameLower, "hitman") or string.find(nameLower, "terrorist") or string.find(nameLower, "criminal") or string.find(nameLower, "kidnapper") or string.find(nameLower, "raider") then
                 catId = "criminal"
             elseif string.find(nameLower, "zombie") or string.find(nameLower, "special") then
                 catId = "special"
@@ -387,40 +387,111 @@ local function PaintJobs(x, y, w, h, alpha, mx, my, scroll)
             padY = padY + 25
         end
         
-        -- Description
-        draw.SimpleText("Description", "TDMRP_SmallBold", padX, padY, ColorAlpha(C.text_secondary, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-        padY = padY + 18
-        
-        -- Word wrap description
+        -- Parse description into flavor text and stats
         local desc = displayJob.description or "No description available."
         local maxLineW = infoPanelW - 35
         surface.SetFont("TDMRP_Small")
         
-        local words = string.Explode(" ", desc)
-        local lines = {}
-        local currentLine = ""
+        -- Split on "Stats:" if present
+        local flavorText = desc
+        local statsText = nil
+        local statsPos = string.find(desc, "Stats:")
+        if statsPos then
+            flavorText = string.sub(desc, 1, statsPos - 1)
+            statsText = string.sub(desc, statsPos)
+        end
         
-        for _, word in ipairs(words) do
-            local testLine = currentLine == "" and word or (currentLine .. " " .. word)
-            local testW = surface.GetTextSize(testLine)
+        -- Strip leading/trailing whitespace and newlines
+        flavorText = string.Trim(flavorText)
+        if statsText then
+            statsText = string.Trim(statsText)
+        end
+        
+        -- Draw Description header
+        draw.SimpleText("Description", "TDMRP_SmallBold", padX, padY, ColorAlpha(C.text_secondary, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        padY = padY + 18
+        
+        -- Helper function to wrap text into lines
+        local function WrapText(text, maxW, font)
+            surface.SetFont(font or "TDMRP_Small")
+            local words = string.Explode(" ", string.gsub(text, "\n", " "))
+            local lines = {}
+            local currentLine = ""
             
-            if testW > maxLineW then
-                if currentLine ~= "" then
-                    table.insert(lines, currentLine)
+            for _, word in ipairs(words) do
+                if word == "" then continue end
+                local testLine = currentLine == "" and word or (currentLine .. " " .. word)
+                local testW = surface.GetTextSize(testLine)
+                
+                if testW > maxW then
+                    if currentLine ~= "" then
+                        table.insert(lines, currentLine)
+                    end
+                    currentLine = word
+                else
+                    currentLine = testLine
                 end
-                currentLine = word
-            else
-                currentLine = testLine
             end
-        end
-        if currentLine ~= "" then
-            table.insert(lines, currentLine)
+            if currentLine ~= "" then
+                table.insert(lines, currentLine)
+            end
+            return lines
         end
         
-        for i, line in ipairs(lines) do
-            if i <= 6 then -- Max 6 lines
+        -- Draw flavor text (max 5 lines)
+        local flavorLines = WrapText(flavorText, maxLineW, "TDMRP_Small")
+        for i, line in ipairs(flavorLines) do
+            if i <= 5 then
                 draw.SimpleText(line, "TDMRP_Small", padX, padY, ColorAlpha(C.text_muted, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
                 padY = padY + 14
+            end
+        end
+        
+        -- Draw stats section if present
+        if statsText then
+            padY = padY + 8
+            
+            -- Divider line
+            surface.SetDrawColor(ColorAlpha(C.border_dark, alpha * 0.5))
+            surface.DrawRect(padX, padY, infoPanelW - 30, 1)
+            padY = padY + 10
+            
+            -- Parse stats into lines (split by newlines and bullets)
+            local statsLines = string.Explode("\n", statsText)
+            
+            for i, line in ipairs(statsLines) do
+                line = string.Trim(line)
+                if line == "" then continue end
+                
+                -- Determine line type and color
+                local lineColor = C.text_muted
+                local lineFont = "TDMRP_Small"
+                
+                if string.StartWith(line, "Stats:") then
+                    -- Stats header - yellow/warning color
+                    lineColor = C.warning
+                    lineFont = "TDMRP_SmallBold"
+                elseif string.StartWith(line, "•") or string.StartWith(line, "-") then
+                    -- Bullet point - stat line
+                    if string.find(line, "HP") or string.find(line, "AP") or string.find(line, "DT") then
+                        lineColor = C.accent  -- Blue for health stats
+                    elseif string.find(line, "ACTIVE") then
+                        lineColor = C.success  -- Green for active ability
+                    elseif string.find(line, "Warning") or string.find(line, "⚠️") then
+                        lineColor = C.error  -- Red for warnings
+                    else
+                        lineColor = C.text_secondary
+                    end
+                end
+                
+                -- Wrap long stat lines
+                local wrappedLines = WrapText(line, maxLineW, lineFont)
+                for j, wrappedLine in ipairs(wrappedLines) do
+                    if padY < infoPanelY + infoPanelH - 60 then  -- Leave room for status
+                        draw.SimpleText(wrappedLine, lineFont, padX, padY, ColorAlpha(lineColor, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+                        padY = padY + 14
+                    end
+                end
             end
         end
         

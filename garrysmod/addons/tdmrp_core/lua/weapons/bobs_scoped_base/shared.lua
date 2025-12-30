@@ -464,3 +464,20 @@ function SWEP:AdjustMouseSensitivity()
     	return 1
      	end
 end
+
+----------------------------------------------------
+-- TDMRP: PreDrawViewModel hook to properly hide viewmodel when scoped
+-- This is more reliable than DrawViewModel(false) for hiding the gun model
+----------------------------------------------------
+if CLIENT then
+	function SWEP:PreDrawViewModel(vm, wep, ply)
+		-- Hide viewmodel when player is in scope mode (holding ATTACK2 and not sprinting)
+		if IsValid(self.Owner) and self.Owner:KeyDown(IN_ATTACK2) 
+		   and self:GetIronsights() == true 
+		   and not self.Owner:KeyDown(IN_SPEED) 
+		   and not self.Owner:KeyDown(IN_USE) then
+			return true -- Return true to prevent drawing the viewmodel
+		end
+		return false
+	end
+end

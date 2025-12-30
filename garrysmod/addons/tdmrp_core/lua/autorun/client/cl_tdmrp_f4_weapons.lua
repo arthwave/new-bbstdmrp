@@ -59,71 +59,130 @@ local typeFilters = {
 ----------------------------------------------------
 
 local function GetFilteredWeapons()
-    local weapons = {}
+    local weaponsList = {}
     
-    -- CSS weapons metadata (19 weapons) with world models for shop display
+    -- CSS weapons metadata (21 weapons - all active CSS wrappers) with world models for shop display
     local CSS_WEAPONS = {
-        ["weapon_tdmrp_cs_glock18"] = { name = "Glock-18", type = "pistol", worldModel = "models/weapons/w_pist_glock18.mdl" },
-        ["weapon_tdmrp_cs_usp"] = { name = "USP", type = "pistol", worldModel = "models/weapons/w_pist_usp.mdl" },
-        ["weapon_tdmrp_cs_p228"] = { name = "P228", type = "pistol", worldModel = "models/weapons/w_pist_p228.mdl" },
-        ["weapon_tdmrp_cs_five_seven"] = { name = "Five-Seven", type = "pistol", worldModel = "models/weapons/w_pist_fiveseven.mdl" },
-        ["weapon_tdmrp_cs_elites"] = { name = "Dual Elites", type = "pistol", worldModel = "models/weapons/w_pist_elite.mdl" },
-        ["weapon_tdmrp_cs_desert_eagle"] = { name = "Desert Eagle", type = "pistol", worldModel = "models/weapons/w_pist_deagle.mdl" },
-        ["weapon_tdmrp_cs_mp5a5"] = { name = "MP5", type = "smg", worldModel = "models/weapons/w_smg_mp5.mdl" },
-        ["weapon_tdmrp_cs_p90"] = { name = "P90", type = "smg", worldModel = "models/weapons/w_smg_p90.mdl" },
-        ["weapon_tdmrp_cs_mac10"] = { name = "MAC-10", type = "smg", worldModel = "models/weapons/w_smg_mac10.mdl" },
-        ["weapon_tdmrp_cs_tmp"] = { name = "TMP", type = "smg", worldModel = "models/weapons/w_smg_tmp.mdl" },
-        ["weapon_tdmrp_cs_ump_45"] = { name = "UMP-45", type = "smg", worldModel = "models/weapons/w_smg_ump45.mdl" },
-        ["weapon_tdmrp_cs_ak47"] = { name = "AK-47", type = "rifle", worldModel = "models/weapons/w_rif_ak47.mdl" },
-        ["weapon_tdmrp_cs_m4a1"] = { name = "M4A1", type = "rifle", worldModel = "models/weapons/w_rif_m4a1.mdl" },
-        ["weapon_tdmrp_cs_aug"] = { name = "AUG", type = "rifle", worldModel = "models/weapons/w_rif_aug.mdl" },
-        ["weapon_tdmrp_cs_famas"] = { name = "FAMAS", type = "rifle", worldModel = "models/weapons/w_rif_famas.mdl" },
-        ["weapon_tdmrp_cs_sg552"] = { name = "SG552", type = "rifle", worldModel = "models/weapons/w_rif_sg552.mdl" },
-        ["weapon_tdmrp_cs_pumpshotgun"] = { name = "Pump Shotgun", type = "shotgun", worldModel = "models/weapons/w_shot_m3super90.mdl" },
-        ["weapon_tdmrp_cs_awp"] = { name = "AWP", type = "sniper", worldModel = "models/weapons/w_snip_awp.mdl" },
-        ["weapon_tdmrp_cs_knife"] = { name = "Knife", type = "melee", worldModel = "models/weapons/w_knife_t.mdl" },
+        ["weapon_tdmrp_cs_glock18"] = { name = "Glock-18", type = "pistol", worldModel = "models/weapons/w_pist_glock18.mdl", price = 600 },
+        ["weapon_tdmrp_cs_usp"] = { name = "USP", type = "pistol", worldModel = "models/weapons/w_pist_usp.mdl", price = 650 },
+        ["weapon_tdmrp_cs_p228"] = { name = "P228", type = "pistol", worldModel = "models/weapons/w_pist_p228.mdl", price = 550 },
+        ["weapon_tdmrp_cs_five_seven"] = { name = "Five-Seven", type = "pistol", worldModel = "models/weapons/w_pist_fiveseven.mdl", price = 700 },
+        ["weapon_tdmrp_cs_elites"] = { name = "Dual Elites", type = "pistol", worldModel = "models/weapons/w_pist_elite.mdl", price = 1200 },
+        ["weapon_tdmrp_cs_desert_eagle"] = { name = "Desert Eagle", type = "revolver", worldModel = "models/weapons/w_pist_deagle.mdl", price = 1500 },
+        ["weapon_tdmrp_cs_mp5a5"] = { name = "MP5", type = "smg", worldModel = "models/weapons/w_smg_mp5.mdl", price = 1800 },
+        ["weapon_tdmrp_cs_p90"] = { name = "P90", type = "smg", worldModel = "models/weapons/w_smg_p90.mdl", price = 2200 },
+        ["weapon_tdmrp_cs_mac10"] = { name = "MAC-10", type = "smg", worldModel = "models/weapons/w_smg_mac10.mdl", price = 1400 },
+        ["weapon_tdmrp_cs_tmp"] = { name = "TMP", type = "smg", worldModel = "models/weapons/w_smg_tmp.mdl", price = 1200 },
+        ["weapon_tdmrp_cs_ump_45"] = { name = "UMP-45", type = "smg", worldModel = "models/weapons/w_smg_ump45.mdl", price = 1600 },
+        ["weapon_tdmrp_cs_ak47"] = { name = "AK-47", type = "rifle", worldModel = "models/weapons/w_rif_ak47.mdl", price = 3500 },
+        ["weapon_tdmrp_cs_m4a1"] = { name = "M4A1", type = "rifle", worldModel = "models/weapons/w_rif_m4a1.mdl", price = 3800 },
+        ["weapon_tdmrp_cs_aug"] = { name = "AUG", type = "rifle", worldModel = "models/weapons/w_rif_aug.mdl", price = 4200 },
+        ["weapon_tdmrp_cs_famas"] = { name = "FAMAS", type = "rifle", worldModel = "models/weapons/w_rif_famas.mdl", price = 2800 },
+        ["weapon_tdmrp_cs_sg552"] = { name = "SG552", type = "rifle", worldModel = "models/weapons/w_rif_sg552.mdl", price = 3600 },
+        ["weapon_tdmrp_cs_galil"] = { name = "Galil", type = "rifle", worldModel = "models/weapons/w_rif_galil.mdl", price = 2600 },
+        ["weapon_tdmrp_cs_pumpshotgun"] = { name = "Pump Shotgun", type = "shotgun", worldModel = "models/weapons/w_shot_m3super90.mdl", price = 2000 },
+        ["weapon_tdmrp_cs_awp"] = { name = "AWP", type = "sniper", worldModel = "models/weapons/w_snip_awp.mdl", price = 6500 },
+        ["weapon_tdmrp_cs_scout"] = { name = "Scout", type = "sniper", worldModel = "models/weapons/w_snip_scout.mdl", price = 3500 },
+        ["weapon_tdmrp_cs_knife"] = { name = "Knife", type = "melee", worldModel = "models/weapons/w_knife_t.mdl", price = 200 },
     }
     
-    -- Filter to active loadout weapons only (60-weapon system)
-    local activeWeapons = TDMRP.ActiveWeaponLoadout or {}
-    local isActive = TDMRP.IsActiveWeapon or function() return true end
+    -- M9K weapons metadata (42 weapons with valid bases)
+    local M9K_WEAPONS = {
+        -- Pistols (5)
+        ["tdmrp_m9k_colt1911"] = { name = "Colt 1911", type = "pistol", price = 800 },
+        ["tdmrp_m9k_hk45"] = { name = "HK45", type = "pistol", price = 900 },
+        ["tdmrp_m9k_m92beretta"] = { name = "Beretta M92", type = "pistol", price = 750 },
+        ["tdmrp_m9k_sig_p229r"] = { name = "SIG P229R", type = "pistol", price = 950 },
+        ["tdmrp_m9k_luger"] = { name = "Luger P08", type = "pistol", price = 700 },
+        -- Revolvers (6)
+        ["tdmrp_m9k_coltpython"] = { name = "Colt Python", type = "revolver", price = 1200 },
+        ["tdmrp_m9k_deagle"] = { name = "Desert Eagle", type = "revolver", price = 1500 },
+        ["tdmrp_m9k_m29satan"] = { name = "M29 Satan", type = "revolver", price = 1800 },
+        ["tdmrp_m9k_model500"] = { name = "S&W Model 500", type = "revolver", price = 2200 },
+        ["tdmrp_m9k_ragingbull"] = { name = "Raging Bull", type = "revolver", price = 1600 },
+        ["tdmrp_m9k_model627"] = { name = "S&W Model 627", type = "revolver", price = 1400 },
+        -- SMGs (7)
+        ["tdmrp_m9k_mp5sd"] = { name = "MP5SD", type = "smg", price = 2000 },
+        ["tdmrp_m9k_mp7"] = { name = "MP7", type = "smg", price = 2200 },
+        ["tdmrp_m9k_thompson"] = { name = "Thompson", type = "smg", price = 1800 },
+        ["tdmrp_m9k_uzi"] = { name = "Uzi", type = "smg", price = 1400 },
+        ["tdmrp_m9k_mp40"] = { name = "MP40", type = "smg", price = 1500 },
+        ["tdmrp_m9k_mp9"] = { name = "MP9", type = "smg", price = 1900 },
+        ["tdmrp_m9k_bizonp19"] = { name = "Bizon PP-19", type = "smg", price = 2100 },
+        -- PDWs (3)
+        ["tdmrp_m9k_honeybadger"] = { name = "Honey Badger", type = "pdw", price = 3200 },
+        ["tdmrp_m9k_vector"] = { name = "Kriss Vector", type = "pdw", price = 3500 },
+        ["tdmrp_m9k_magpulpdr"] = { name = "Magpul PDR", type = "pdw", price = 2800 },
+        -- Rifles (14)
+        ["tdmrp_m9k_an94"] = { name = "AN-94", type = "rifle", price = 4200 },
+        ["tdmrp_m9k_fal"] = { name = "FN FAL", type = "rifle", price = 4500 },
+        ["tdmrp_m9k_g36"] = { name = "G36", type = "rifle", price = 4000 },
+        ["tdmrp_m9k_l85"] = { name = "L85A2", type = "rifle", price = 3800 },
+        ["tdmrp_m9k_m416"] = { name = "HK416", type = "rifle", price = 4800 },
+        ["tdmrp_m9k_scar"] = { name = "FN SCAR", type = "rifle", price = 5200 },
+        ["tdmrp_m9k_tar21"] = { name = "TAR-21", type = "rifle", price = 4400 },
+        ["tdmrp_m9k_val"] = { name = "AS Val", type = "rifle", price = 3600 },
+        ["tdmrp_m9k_ak74"] = { name = "AK-74", type = "rifle", price = 3400 },
+        ["tdmrp_m9k_amd65"] = { name = "AMD-65", type = "rifle", price = 3200 },
+        ["tdmrp_m9k_f2000"] = { name = "FN F2000", type = "rifle", price = 4600 },
+        ["tdmrp_m9k_g3a3"] = { name = "G3A3", type = "rifle", price = 4000 },
+        ["tdmrp_m9k_m16a4_acog"] = { name = "M16A4 ACOG", type = "rifle", price = 4200 },
+        ["tdmrp_m9k_acr"] = { name = "ACR", type = "rifle", price = 4800 },
+        -- Shotguns (3)
+        ["tdmrp_m9k_spas12"] = { name = "SPAS-12", type = "shotgun", price = 2500 },
+        ["tdmrp_m9k_1887winchester"] = { name = "1887 Winchester", type = "shotgun", price = 2200 },
+        ["tdmrp_m9k_jackhammer"] = { name = "Jackhammer", type = "shotgun", price = 3500 },
+        -- Snipers (2)
+        ["tdmrp_m9k_intervention"] = { name = "Intervention", type = "sniper", price = 6000 },
+        ["tdmrp_m9k_barret_m82"] = { name = "Barrett M82", type = "sniper", price = 8000 },
+        -- LMGs (2)
+        ["tdmrp_m9k_m249lmg"] = { name = "M249 LMG", type = "lmg", price = 7000 },
+        ["tdmrp_m9k_m60"] = { name = "M60", type = "lmg", price = 6500 },
+    }
     
-    -- Add M9K weapons from registry
-    if TDMRP.M9KRegistry then
-        for class, meta in pairs(TDMRP.M9KRegistry) do
-            if isActive(class) then
-                local wepType = meta.type or "pistol"
-                if selectedType == "all" or wepType == selectedType then
-                    table.insert(weapons, {
-                        class = class,
-                        meta = meta,
-                    })
-                end
-            end
+    -- Add M9K weapons
+    for class, meta in pairs(M9K_WEAPONS) do
+        if selectedType == "all" or meta.type == selectedType then
+            -- Get world model from weapon entity
+            local wepTable = weapons.Get(class)
+            local worldModel = wepTable and wepTable.WorldModel or "models/weapons/w_pist_p228.mdl"
+            
+            table.insert(weaponsList, {
+                class = class,
+                meta = {
+                    name = meta.name,
+                    type = meta.type,
+                    basePrice = meta.price,
+                    worldModel = worldModel,
+                },
+            })
         end
     end
     
     -- Add CSS weapons
     for class, meta in pairs(CSS_WEAPONS) do
-        if isActive(class) then
-            if selectedType == "all" or meta.type == selectedType then
-                table.insert(weapons, {
-                    class = class,
-                    meta = meta,
-                })
-            end
+        if selectedType == "all" or meta.type == selectedType then
+            table.insert(weaponsList, {
+                class = class,
+                meta = {
+                    name = meta.name,
+                    type = meta.type,
+                    basePrice = meta.price,
+                    worldModel = meta.worldModel,
+                },
+            })
         end
     end
     
     -- Sort by type then name
-    table.sort(weapons, function(a, b)
+    table.sort(weaponsList, function(a, b)
         if a.meta.type ~= b.meta.type then
             return (a.meta.type or "") < (b.meta.type or "")
         end
         return (a.meta.name or "") < (b.meta.name or "")
     end)
     
-    return weapons
+    return weaponsList
 end
 
 ----------------------------------------------------

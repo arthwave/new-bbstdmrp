@@ -9,8 +9,8 @@ SWEP.AdminSpawnable = true
 SWEP.Slot = 1
 SWEP.SlotPos = 5
 
-SWEP.ViewModel = "models/weapons/cstrike/c_pist_elites.mdl"
-SWEP.WorldModel = "models/weapons/w_pist_elites.mdl"
+SWEP.ViewModel = "models/weapons/cstrike/c_pist_elite.mdl"
+SWEP.WorldModel = "models/weapons/w_pist_elite.mdl"
 SWEP.HoldType = "pistol"
 
 SWEP.Primary.Sound = Sound("Weapon_Elites.Single")

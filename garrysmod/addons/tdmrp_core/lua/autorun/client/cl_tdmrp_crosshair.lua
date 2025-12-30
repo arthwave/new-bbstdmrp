@@ -84,9 +84,9 @@ hook.Add("HUDPaint", "TDMRP_DynamicCrosshair", function()
     -- Only draw for M9K weapons
     if not TDMRP.IsM9KWeapon(wep) then return end
     
-    -- Check for ADS (ironsights)
+    -- Check for ADS (ironsights) - check both NWBool names for compatibility
     if Config.adsHide then
-        local bIron = wep:GetNWBool("Ironsights", false)
+        local bIron = wep:GetNWBool("Ironsights", false) or wep:GetNWBool("M9K_Ironsights", false)
         if bIron then return end
     end
     

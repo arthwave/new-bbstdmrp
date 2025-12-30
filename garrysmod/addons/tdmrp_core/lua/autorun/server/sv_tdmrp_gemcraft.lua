@@ -141,138 +141,126 @@ end
 -- Stat application helpers
 ----------------------------------------------------
 
-local function ApplySuffixStatMods(wep, suffixId)
-    if not TDMRP or not TDMRP.Gems or not TDMRP.Gems.Suffixes then return end
-
-    local suffix = TDMRP.Gems.Suffixes[suffixId]
-    if not suffix or not suffix.stats then return end
-
-    local s = suffix.stats
-    
-    -- Get current tier-scaled stats as base values
-    local baseDmg = wep.Primary and wep.Primary.Damage or wep:GetNWInt("TDMRP_Damage", 20)
-    local baseRPM = wep.Primary and wep.Primary.RPM or wep:GetNWInt("TDMRP_RPM", 600)
-    local baseSpread = wep.Primary and wep.Primary.Spread or 0.03
-    local baseRecoil = wep.Primary and wep.Primary.KickUp or 0.5
-    local baseHandling = wep.TDMRP_Handling or 100
-    
-    -- Apply suffix multipliers to ACTUAL weapon stats (not just display)
-    if s.damage and wep.Primary then
-        wep.Primary.Damage = math.floor(baseDmg * (1 + s.damage))
+-- Helper function to get tier-scaled base stats (without modifiers)
+-- This ensures modifiers always apply to clean tier-scaled stats, not already-modified stats
+local function GetTierScaledStats(wep)
+    local tier = wep:GetNWInt("TDMRP_Tier", wep.Tier or 1)
+    local scale = TDMRP_WeaponMixin and TDMRP_WeaponMixin.TierScaling and TDMRP_WeaponMixin.TierScaling[tier]
+    if not scale then
+        scale = { damage = 1, rpm = 1, spread = 1, recoil = 1, handling = 1 }
     end
     
-    if s.rpm and wep.Primary then
-        wep.Primary.RPM = math.floor(baseRPM * (1 + s.rpm))
-        wep.Primary.Delay = 60 / wep.Primary.RPM
-    end
+    -- Get original base stats (pre-tier-scaling)
+    local baseDmg = wep.TDMRP_BaseDamage or (wep.Primary and wep.Primary.Damage) or 25
+    local baseRPM = wep.TDMRP_BaseRPM or (wep.Primary and wep.Primary.RPM) or 600
+    local baseSpread = wep.TDMRP_BaseSpread or (wep.Primary and wep.Primary.Spread) or 0.03
+    local baseKickUp = wep.TDMRP_BaseKickUp or (wep.Primary and wep.Primary.KickUp) or 0.5
+    local baseKickDown = wep.TDMRP_BaseKickDown or (wep.Primary and wep.Primary.KickDown) or 0.3
+    local baseKickHoriz = wep.TDMRP_BaseKickHoriz or (wep.Primary and wep.Primary.KickHorizontal) or 0.2
+    local baseMagSize = wep.TDMRP_BaseMagSize or (wep.Primary and wep.Primary.ClipSize) or 30
     
-    if s.spread and wep.Primary then
-        wep.Primary.Spread = baseSpread * (1 + s.spread)
-    end
-    
-    if s.recoil and wep.Primary then
-        local recoilMult = (1 + s.recoil)
-        wep.Primary.KickUp = baseRecoil * recoilMult
-        wep.Primary.KickDown = (wep.TDMRP_BaseKickDown or 0.3) * recoilMult
-        wep.Primary.KickHorizontal = (wep.TDMRP_BaseKickHoriz or 0.2) * recoilMult
-    end
-    
-    if s.handling then
-        wep.TDMRP_Handling = math.Clamp(math.floor(baseHandling * (1 + s.handling)), 0, 250)
-    end
-    
-    if s.reload then
-        wep.TDMRP_SuffixReloadMod = (1 + s.reload)
-    end
-    
-    if s.magazine and wep.Primary then
-        local baseMag = wep.TDMRP_BaseMagSize or wep.Primary.ClipSize or 30
-        wep.Primary.ClipSize = math.floor(baseMag * (1 + s.magazine))
-        if not wep.TDMRP_BaseMagSize then
-            wep.TDMRP_BaseMagSize = baseMag
-        end
-    end
-    
-    -- Update networked stats for HUD display
-    if TDMRP_WeaponMixin and TDMRP_WeaponMixin.SetNetworkedStats then
-        TDMRP_WeaponMixin.SetNetworkedStats(wep)
-    end
+    -- Apply tier scaling to get clean tier-scaled stats
+    return {
+        damage = math.Round(baseDmg * scale.damage),
+        rpm = math.Round(baseRPM * scale.rpm),
+        spread = baseSpread * scale.spread,
+        kickUp = baseKickUp * scale.recoil,
+        kickDown = baseKickDown * scale.recoil,
+        kickHoriz = baseKickHoriz * scale.recoil,
+        handling = math.Round(100 * (scale.handling or 1)),
+        magSize = baseMagSize  -- Magazine doesn't scale with tier
+    }
 end
 
-local function ApplyPrefixStatMods(wep, prefixId)
-    if not TDMRP or not TDMRP.Gems or not TDMRP.Gems.Prefixes then return end
-
-    local pref = TDMRP.Gems.Prefixes[prefixId]
-    if not pref or not pref.stats then return end
-
-    local s = pref.stats
+-- UNIFIED function to apply BOTH prefix AND suffix modifiers
+-- Modifiers are applied multiplicatively: tierBase * (1 + prefixMod) * (1 + suffixMod)
+-- This prevents additive stacking and ensures both modifiers combine correctly
+-- EXPORTED globally so mixin can call it after tier scaling
+local function ApplyAllCraftModifiers(wep)
+    if not TDMRP or not TDMRP.Gems then return end
     
-    -- Get current tier-scaled stats as base values
-    local baseDmg = wep.Primary and wep.Primary.Damage or wep:GetNWInt("TDMRP_Damage", 20)
-    local baseRPM = wep.Primary and wep.Primary.RPM or wep:GetNWInt("TDMRP_RPM", 600)
-    local baseSpread = wep.Primary and wep.Primary.Spread or 0.03
-    local baseRecoil = wep.Primary and wep.Primary.KickUp or 0.5
-    local baseHandling = wep.TDMRP_Handling or 100
+    local prefixId = wep:GetNWString("TDMRP_PrefixID", "")
+    local suffixId = wep:GetNWString("TDMRP_SuffixID", "")
     
-    -- Apply prefix multipliers to ACTUAL weapon stats (not just display)
-    if s.damage and wep.Primary then
-        wep.Primary.Damage = math.floor(baseDmg * (1 + s.damage))
-    end
+    -- Get clean tier-scaled stats as starting point
+    local tierStats = GetTierScaledStats(wep)
     
-    if s.rpm and wep.Primary then
-        wep.Primary.RPM = math.floor(baseRPM * (1 + s.rpm))
+    -- Get modifier data
+    local prefix = prefixId ~= "" and TDMRP.Gems.Prefixes and TDMRP.Gems.Prefixes[prefixId]
+    local suffix = suffixId ~= "" and TDMRP.Gems.Suffixes and TDMRP.Gems.Suffixes[suffixId]
+    
+    local prefixStats = prefix and prefix.stats or {}
+    local suffixStats = suffix and suffix.stats or {}
+    
+    -- Calculate combined multipliers (multiplicative)
+    local damageMult = (1 + (prefixStats.damage or 0)) * (1 + (suffixStats.damage or 0))
+    local rpmMult = (1 + (prefixStats.rpm or 0)) * (1 + (suffixStats.rpm or 0))
+    local spreadMult = (1 + (prefixStats.spread or 0)) * (1 + (suffixStats.spread or 0))
+    local recoilMult = (1 + (prefixStats.recoil or 0)) * (1 + (suffixStats.recoil or 0))
+    local handlingMult = (1 + (prefixStats.handling or 0)) * (1 + (suffixStats.handling or 0))
+    local magazineMult = (1 + (prefixStats.magazine or 0)) * (1 + (suffixStats.magazine or 0))
+    
+    -- Apply combined multipliers to tier-scaled base stats
+    if wep.Primary then
+        wep.Primary.Damage = math.floor(tierStats.damage * damageMult)
+        wep.Primary.RPM = math.floor(tierStats.rpm * rpmMult)
         wep.Primary.Delay = 60 / wep.Primary.RPM
+        wep.Primary.Spread = tierStats.spread * spreadMult
+        wep.Primary.KickUp = tierStats.kickUp * recoilMult
+        wep.Primary.KickDown = tierStats.kickDown * recoilMult
+        wep.Primary.KickHorizontal = tierStats.kickHoriz * recoilMult
+        wep.Primary.ClipSize = math.floor(tierStats.magSize * magazineMult)
     end
     
-    if s.spread and wep.Primary then
-        wep.Primary.Spread = baseSpread * (1 + s.spread)
+    wep.TDMRP_Handling = math.Clamp(math.floor(tierStats.handling * handlingMult), 0, 250)
+    
+    -- Store reload modifiers separately (applied via hooks)
+    if prefixStats.reload then
+        wep.TDMRP_PrefixReloadMod = (1 + prefixStats.reload)
+    end
+    if suffixStats.reload then
+        wep.TDMRP_SuffixReloadMod = (1 + suffixStats.reload)
     end
     
-    if s.recoil and wep.Primary then
-        local recoilMult = (1 + s.recoil)
-        wep.Primary.KickUp = baseRecoil * recoilMult
-        wep.Primary.KickDown = (wep.TDMRP_BaseKickDown or 0.3) * recoilMult
-        wep.Primary.KickHorizontal = (wep.TDMRP_BaseKickHoriz or 0.2) * recoilMult
-    end
-    
-    if s.handling then
-        wep.TDMRP_Handling = math.Clamp(math.floor(baseHandling * (1 + s.handling)), 0, 250)
-    end
-    
-    if s.reload then
-        -- Reload speed stored in tier scaling, applied via GetReloadMultiplier hook
-        wep.TDMRP_PrefixReloadMod = (1 + s.reload)
-    end
-    
-    if s.magazine and wep.Primary then
-        -- Magazine size modifier
-        local baseMag = wep.TDMRP_BaseMagSize or wep.Primary.ClipSize or 30
-        wep.Primary.ClipSize = math.floor(baseMag * (1 + s.magazine))
-        if not wep.TDMRP_BaseMagSize then
-            wep.TDMRP_BaseMagSize = baseMag
-        end
+    -- Store mag base if not set
+    if not wep.TDMRP_BaseMagSize then
+        wep.TDMRP_BaseMagSize = tierStats.magSize
     end
     
     -- Update networked stats for HUD display
     if TDMRP_WeaponMixin and TDMRP_WeaponMixin.SetNetworkedStats then
         TDMRP_WeaponMixin.SetNetworkedStats(wep)
-    else
-        -- Manual NWInt update if mixin not available
-        wep:SetNWInt("TDMRP_Damage", wep.Primary and wep.Primary.Damage or baseDmg)
-        wep:SetNWInt("TDMRP_RPM", wep.Primary and wep.Primary.RPM or baseRPM)
-        
-        local accuracy = math.Clamp(100 - (wep.Primary and wep.Primary.Spread or 0.03) * 1000, 0, 95)
-        wep:SetNWInt("TDMRP_Accuracy", math.Round(accuracy))
-        
-        local recoilScore = math.Clamp((wep.Primary and wep.Primary.KickUp or 0.5) * 50, 5, 100)
-        wep:SetNWInt("TDMRP_Recoil", math.Round(recoilScore))
-        
-        wep:SetNWInt("TDMRP_Handling", wep.TDMRP_Handling or baseHandling)
     end
     
-    print(string.format("[TDMRP] Applied prefix '%s' stats: Dmg=%d RPM=%d Spread=%.3f Recoil=%.2f", 
-        prefixId, wep.Primary and wep.Primary.Damage or 0, wep.Primary and wep.Primary.RPM or 0,
-        wep.Primary and wep.Primary.Spread or 0, wep.Primary and wep.Primary.KickUp or 0))
+    print(string.format("[TDMRP] Applied combined modifiers (prefix=%s, suffix=%s): Dmg=%d (x%.2f) RPM=%d (x%.2f) Spread=%.3f (x%.2f)", 
+        prefixId ~= "" and prefixId or "none",
+        suffixId ~= "" and suffixId or "none",
+        wep.Primary and wep.Primary.Damage or 0, damageMult,
+        wep.Primary and wep.Primary.RPM or 0, rpmMult,
+        wep.Primary and wep.Primary.Spread or 0, spreadMult))
+end
+
+-- Export ApplyAllCraftModifiers globally so mixin can use it
+G.ApplyAllCraftModifiers = ApplyAllCraftModifiers
+
+-- Legacy wrapper - calls unified function to apply all modifiers
+local function ApplySuffixStatMods(wep, suffixId)
+    if not TDMRP or not TDMRP.Gems or not TDMRP.Gems.Suffixes then return end
+    local suffix = TDMRP.Gems.Suffixes[suffixId]
+    if not suffix then return end
+    
+    -- Use unified function to apply all modifiers (combines prefix + suffix)
+    ApplyAllCraftModifiers(wep)
+end
+
+-- Legacy wrapper - calls unified function to apply all modifiers
+local function ApplyPrefixStatMods(wep, prefixId)
+    if not TDMRP or not TDMRP.Gems or not TDMRP.Gems.Prefixes then return end
+    local pref = TDMRP.Gems.Prefixes[prefixId]
+    if not pref then return end
+    
+    -- Use unified function to apply all modifiers (combines prefix + suffix)
+    ApplyAllCraftModifiers(wep)
 end
 
 local function PickRandomSuffix(tier)
