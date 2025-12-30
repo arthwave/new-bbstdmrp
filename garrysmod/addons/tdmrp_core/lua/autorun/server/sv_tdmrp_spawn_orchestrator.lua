@@ -389,6 +389,37 @@ function TDMRP.Spawn.ApplyJobStats(ply)
 end
 
 ----------------------------------------------------
+-- Core: Give combat role spawn ammo (5x of all ammo types)
+-- Only for cop and criminal classes
+----------------------------------------------------
+
+function TDMRP.Spawn.GiveCombatAmmo(ply)
+    if not IsValid(ply) then return end
+    
+    -- Only for combat roles
+    if not IsCombatClass(ply) then return end
+    
+    -- Ammo types and amounts (5x multiplier)
+    -- These match the F4 ammo shop types
+    local ammoGrants = {
+        { type = "SMG1",     amount = 60 * 5 },   -- Rifle/SMG ammo
+        { type = "AR2",      amount = 60 * 5 },   -- AR-type ammo
+        { type = "Pistol",   amount = 60 * 5 },   -- Pistol ammo
+        { type = "Buckshot", amount = 32 * 5 },   -- Shotgun ammo
+        { type = "XBowBolt", amount = 15 * 5 },   -- Projectile/Crossbow ammo (knife ammo)
+    }
+    
+    for _, grant in ipairs(ammoGrants) do
+        local given = ply:GiveAmmo(grant.amount, grant.type, true)
+        if given > 0 then
+            -- Silent success
+        end
+    end
+    
+    print(string.format("[TDMRP Spawn] Gave combat ammo to %s (5x all types)", ply:Nick()))
+end
+
+----------------------------------------------------
 -- Core: Give loadout weapons
 ----------------------------------------------------
 
@@ -596,6 +627,9 @@ function TDMRP.Spawn.CompleteSpawn(ply, primaryChoice, secondaryChoice, gearChoi
     
     -- Apply job stats
     TDMRP.Spawn.ApplyJobStats(ply)
+    
+    -- Give combat ammo (5x all types for cop/criminal)
+    TDMRP.Spawn.GiveCombatAmmo(ply)
     
     -- Give loadout weapons (unless bypassing)
     if not bypassLoadout then

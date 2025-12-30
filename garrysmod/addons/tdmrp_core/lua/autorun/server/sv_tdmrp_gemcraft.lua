@@ -670,51 +670,58 @@ local function UpdateWeaponDisplayName(wep)
     print(string.format("[TDMRP] Updated weapon display name: %s", displayName))
 end
 
--- Helper: Apply prefix stat mods to weapon
-local function ApplyPrefixToWeapon(wep, prefixId)
+-- Helper: Reset weapon to tier baseline stats (removes all prefix/suffix effects)
+-- This MUST be called before applying new prefix/suffix to prevent stat stacking
+local function ResetToTierBaseline(wep)
     if not IsValid(wep) then return end
-    if not TDMRP.Gems or not TDMRP.Gems.Prefixes then return end
     
-    local prefix = TDMRP.Gems.Prefixes[prefixId]
-    if not prefix or not prefix.stats then return end
+    -- Get clean tier-scaled stats without any modifiers
+    local tierStats = GetTierScaledStats(wep)
     
-    -- Get current stats from NWInt AND Primary table
-    local dmg = wep:GetNWInt("TDMRP_Damage", 20)
-    local rpm = wep:GetNWInt("TDMRP_RPM", 600)
-    local acc = wep:GetNWInt("TDMRP_Accuracy", 60)
-    local rec = wep:GetNWInt("TDMRP_Recoil", 25)
-    local han = wep:GetNWInt("TDMRP_Handling", 100)
-    
-    -- Also get from Primary if different
-    if wep.Primary and wep.Primary.Damage then dmg = wep.Primary.Damage end
-    if wep.Primary and wep.Primary.RPM then rpm = wep.Primary.RPM end
-    
-    -- Apply prefix modifiers
-    local s = prefix.stats
-    if s.damage then dmg = math.floor(dmg * (1 + s.damage)) end
-    if s.rpm then rpm = math.floor(rpm * (1 + s.rpm)) end
-    if s.accuracy then acc = math.floor(acc * (1 + s.accuracy)) end
-    if s.recoil then rec = math.floor(rec * (1 + s.recoil)) end
-    if s.handling then han = math.floor(han * (1 + s.handling)) end
-    
-    -- Apply clamped values to NWInts
-    wep:SetNWInt("TDMRP_Damage", math.max(1, dmg))
-    wep:SetNWInt("TDMRP_RPM", math.max(60, rpm))
-    wep:SetNWInt("TDMRP_Accuracy", math.Clamp(acc, 0, 95))
-    wep:SetNWInt("TDMRP_Recoil", math.max(5, rec))
-    wep:SetNWInt("TDMRP_Handling", math.Clamp(han, 0, 250))
-    
-    -- CRITICAL: Also update Primary table so BuildInstanceFromSWEP reads modified stats
+    -- Reset Primary table to tier baseline
     if wep.Primary then
-        wep.Primary.Damage = math.max(1, dmg)
-        wep.Primary.RPM = math.max(60, rpm)
-        wep.Primary.Spread = wep.Primary.Spread or 0.03
-        -- Update delay based on new RPM
-        wep.Primary.Delay = 60 / math.max(60, rpm)
+        wep.Primary.Damage = tierStats.damage
+        wep.Primary.RPM = tierStats.rpm
+        wep.Primary.Delay = 60 / tierStats.rpm
+        wep.Primary.Spread = tierStats.spread
+        wep.Primary.KickUp = tierStats.kickUp
+        wep.Primary.KickDown = tierStats.kickDown
+        wep.Primary.KickHorizontal = tierStats.kickHoriz
+        wep.Primary.ClipSize = tierStats.magSize
     end
     
-    print(string.format("[TDMRP] ApplyPrefixToWeapon: %s - Dmg: %d→%d, RPM: %d→%d", 
-        prefixId, wep:GetNWInt("TDMRP_Damage", 20), dmg, wep:GetNWInt("TDMRP_RPM", 600), rpm))
+    -- Reset handling
+    wep.TDMRP_Handling = tierStats.handling
+    
+    -- Clear any reload modifiers from previous prefix/suffix
+    wep.TDMRP_PrefixReloadMod = nil
+    wep.TDMRP_SuffixReloadMod = nil
+    
+    -- Update networked stats immediately
+    if TDMRP_WeaponMixin and TDMRP_WeaponMixin.SetNetworkedStats then
+        TDMRP_WeaponMixin.SetNetworkedStats(wep)
+    end
+    
+    print(string.format("[TDMRP] Reset weapon to tier baseline: Dmg=%d, RPM=%d, Spread=%.3f", 
+        tierStats.damage, tierStats.rpm, tierStats.spread))
+end
+
+-- Export ResetToTierBaseline for potential use elsewhere
+G.ResetToTierBaseline = ResetToTierBaseline
+
+-- Helper: Apply prefix stat mods to weapon (DEPRECATED - use ApplyAllCraftModifiers instead)
+-- This function now just calls the unified function to prevent stat stacking
+local function ApplyPrefixToWeapon(wep, prefixId)
+    if not IsValid(wep) then return end
+    
+    -- CRITICAL: Reset to baseline first, then apply all modifiers
+    -- This ensures we don't stack stats when re-rolling prefixes
+    ApplyAllCraftModifiers(wep)
+    
+    local prefix = TDMRP.Gems and TDMRP.Gems.Prefixes and TDMRP.Gems.Prefixes[prefixId]
+    if prefix then
+        print(string.format("[TDMRP] ApplyPrefixToWeapon: Applied prefix '%s' via unified system", prefixId))
+    end
 end
 
 -- Send gem counts to client

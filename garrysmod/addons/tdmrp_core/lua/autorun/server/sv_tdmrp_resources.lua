@@ -43,7 +43,12 @@ if SERVER then
     resource.AddFile("sound/npc/metropolice/pain2.wav")
     resource.AddFile("sound/npc/metropolice/pain3.wav")
     resource.AddFile("sound/npc/metropolice/pain4.wav")
-    print("[TDMRP] Added skill sounds to FastDL/resources.")
+    
+    -- CSS Scope overlay materials
+    resource.AddFile("materials/scope/scope_normal.vmt")
+    resource.AddFile("materials/scope/scope_normal.vtf")
+    
+    print("[TDMRP] Added skill sounds and scope materials to FastDL/resources.")
     resource.AddWorkshop("2822934109") 
     resource.AddWorkshop("391440832") 
     resource.AddWorkshop("3556711731") 
