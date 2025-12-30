@@ -748,6 +748,11 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
                             net.WriteBool(willKill)
                             net.WriteBool(isQuadDamage)
                         net.Send(attacker)
+                        
+                        -- Play headshot kill sound in area radius (M9K weapons)
+                        if isHeadshot and willKill then
+                            sound.Play("tdmrp/headshot.wav", hitPos, 80, 100, 1)
+                        end
                     else
                         print("[TDMRP] BLOCKED (debounce)")
                     end
