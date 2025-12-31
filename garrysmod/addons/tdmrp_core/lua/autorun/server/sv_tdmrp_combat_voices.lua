@@ -32,7 +32,7 @@ local CONFIG = {
     SOUND_VOLUME = 85,                  -- Volume level
     SOUND_PITCH = 100,                  -- Pitch
     SOUND_LEVEL = 75,                   -- dB level (75 = ~1000 unit range)
-    SOUND_MULTIPLIER = 2.0,             -- Volume multiplier (2.0 = 100% louder)
+    SOUND_MULTIPLIER = 3.0,             -- Volume multiplier (3.0 = 200% louder)
 }
 
 ----------------------------------------------------
