@@ -77,6 +77,22 @@ Creative direction should be inspired by the original "Bob's TDMRP" server but r
 - Follow the architecture and coding patterns established in existing TDMRP files.
 - Ask clarifying questions if unsure about the correct or intended approach.
 
+## ⚠️ CRITICAL: Reference Folders (DO NOT USE AT RUNTIME)
+
+**The `bob weapons/` folder is REFERENCE ONLY.**
+
+This folder contains the original Bob's TDMRP weapon code for historical reference. It should:
+- ❌ NEVER be loaded by the server at runtime
+- ❌ NEVER be assumed to exist on the server
+- ❌ NEVER be inherited from directly
+- ✅ ONLY be used as reference when implementing features
+- ✅ If code is needed from it, COPY it into `tdmrp_core/` addon
+
+**All CSS weapons (`weapon_tdmrp_cs_*`) must be completely self-contained within `tdmrp_core/`.**
+They must function without the `bob weapons/` folder existing.
+
+---
+
 ## ⚠️ CRITICAL: Weapon Architecture
 
 **MANDATORY: All weapon interactions MUST use `tdmrp_m9k_*` class names. NEVER use base `m9k_*` weapons.**

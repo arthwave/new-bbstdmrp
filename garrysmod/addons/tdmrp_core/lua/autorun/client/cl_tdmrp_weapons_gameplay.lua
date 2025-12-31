@@ -134,14 +134,37 @@ end)
 
 ---------------------------------------------------------
 -- Hook: Apply modifiers on weapon fire (for dynamic recoil patterns)
+-- Also plays quad damage overlay sound for both M9K and CSS weapons
 ---------------------------------------------------------
 hook.Add("EntityFireBullets", "TDMRP_ApplyRecoil", function(ent, data)
     if not IsValid(ent) or not ent:IsPlayer() then return end
     
     local ply = ent
     local wep = ply:GetActiveWeapon()
+    if not IsValid(wep) then return end
     
-    if not IsValid(wep) or not TDMRP.IsM9KWeapon or not TDMRP.IsM9KWeapon(wep) then return end
+    -- Check if this is a TDMRP weapon (either M9K or CSS)
+    local isTDMRPWeapon = (TDMRP.IsM9KWeapon and TDMRP.IsM9KWeapon(wep)) or wep.IsTDMRPCSSWeapon
+    
+    -- Play quad damage overlay sound if active (works for ALL weapons)
+    if ply:GetNWBool("TDMRP_SkillActive", false) then
+        local activeSkillID = ply:GetNWString("TDMRP_ActiveSkillID", "")
+        if activeSkillID == "quaddamage" then
+            -- Check if enough time has passed since last overlay sound
+            ply.TDMRP_LastOverlaySoundTime = ply.TDMRP_LastOverlaySoundTime or 0
+            if CurTime() >= ply.TDMRP_LastOverlaySoundTime + 0.05 then
+                local skillData = TDMRP.ActiveSkills and TDMRP.ActiveSkills.GetSkillData and TDMRP.ActiveSkills.GetSkillData("quaddamage")
+                if skillData and skillData.overlaySound then
+                    -- EmitSound plays local to the player, so both player and nearby entities hear it
+                    ply:EmitSound(skillData.overlaySound, 104, 100)
+                    ply.TDMRP_LastOverlaySoundTime = CurTime()
+                end
+            end
+        end
+    end
+    
+    -- M9K recoil pattern system (only for M9K weapons)
+    if not isTDMRPWeapon or not (TDMRP.IsM9KWeapon and TDMRP.IsM9KWeapon(wep)) then return end
     
     -- Get recoil multiplier from weapon (set in ApplyStatModifiers)
     local recoilMult = wep.TDMRP_RecoilMultiplier or 1.0
@@ -167,23 +190,6 @@ hook.Add("EntityFireBullets", "TDMRP_ApplyRecoil", function(ent, data)
             math.Rand(-0.2, 0.2) * punchScale,
             0
         ))
-    end
-    
-    -- Play quad damage overlay sound if active (with 0.05s cooldown to avoid spam on high fire rate weapons)
-    if ply:GetNWBool("TDMRP_SkillActive", false) then
-        local activeSkillID = ply:GetNWString("TDMRP_ActiveSkillID", "")
-        if activeSkillID == "quaddamage" then
-            -- Check if enough time has passed since last overlay sound
-            ply.TDMRP_LastOverlaySoundTime = ply.TDMRP_LastOverlaySoundTime or 0
-            if CurTime() >= ply.TDMRP_LastOverlaySoundTime + 0.05 then
-                local skillData = TDMRP.ActiveSkills.GetSkillData("quaddamage")
-                if skillData and skillData.overlaySound then
-                    -- EmitSound plays local to the player, so both player and nearby entities hear it
-                    ply:EmitSound(skillData.overlaySound, 104, 100)
-                    ply.TDMRP_LastOverlaySoundTime = CurTime()
-                end
-            end
-        end
     end
 end)
 

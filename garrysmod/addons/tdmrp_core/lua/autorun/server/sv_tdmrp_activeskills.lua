@@ -557,30 +557,106 @@ hook.Add("EntityTakeDamage", "TDMRP_QuadDamage", function(target, dmginfo)
 end)
 
 ----------------------------------------------------
+-- Track weapons modified by berserk for proper cleanup
+----------------------------------------------------
+local berserkModifiedWeapons = {}
+
+----------------------------------------------------
+-- Helper: Restore weapon fire rate to original
+----------------------------------------------------
+local function RestoreWeaponFireRate(wep)
+    if not IsValid(wep) then return end
+    
+    if wep.TDMRP_OriginalDelay then
+        wep.Primary.Delay = wep.TDMRP_OriginalDelay
+        wep.TDMRP_OriginalDelay = nil
+    end
+    if wep.TDMRP_OriginalRPM then
+        wep.Primary.RPM = wep.TDMRP_OriginalRPM
+        wep.TDMRP_OriginalRPM = nil
+    end
+end
+
+----------------------------------------------------
+-- Helper: Restore all modified weapons for a player
+----------------------------------------------------
+local function RestoreAllPlayerWeapons(ply)
+    if not IsValid(ply) then return end
+    
+    for _, wep in pairs(ply:GetWeapons()) do
+        RestoreWeaponFireRate(wep)
+    end
+    
+    -- Clear tracking
+    if berserkModifiedWeapons[ply] then
+        berserkModifiedWeapons[ply] = nil
+    end
+end
+
+----------------------------------------------------
 -- Hook: Berserk fire rate modifier
+-- Works with both M9K weapons (Primary.Delay) and CSS weapons (Primary.RPM)
 ----------------------------------------------------
 hook.Add("Think", "TDMRP_BerserkFireRate", function()
     for ply, buff in pairs(TDMRP.ActiveSkills.ActiveBuffs) do
         if IsValid(ply) and buff.skill == "berserk" and CurTime() < buff.endTime then
             local wep = ply:GetActiveWeapon()
             if IsValid(wep) and wep.Primary then
-                -- Store original delay if not stored
+                -- Store original values if not stored
                 if not wep.TDMRP_OriginalDelay then
-                    wep.TDMRP_OriginalDelay = wep.Primary.Delay
+                    -- Store original delay (or calculate from RPM for CSS weapons)
+                    if wep.Primary.Delay and wep.Primary.Delay > 0 then
+                        wep.TDMRP_OriginalDelay = wep.Primary.Delay
+                    elseif wep.Primary.RPM and wep.Primary.RPM > 0 then
+                        wep.TDMRP_OriginalDelay = 60 / wep.Primary.RPM
+                    else
+                        wep.TDMRP_OriginalDelay = 0.1  -- Fallback
+                    end
+                    
+                    -- Store original RPM if it exists (for CSS weapons)
+                    if wep.Primary.RPM then
+                        wep.TDMRP_OriginalRPM = wep.Primary.RPM
+                    end
+                    
+                    -- Track modified weapon
+                    berserkModifiedWeapons[ply] = berserkModifiedWeapons[ply] or {}
+                    berserkModifiedWeapons[ply][wep] = true
                 end
                 
-                -- Triple fire rate = divide delay by 3
+                -- Triple fire rate = divide delay by 3 (or multiply RPM by 3)
                 wep.Primary.Delay = wep.TDMRP_OriginalDelay / 3
+                
+                -- Also update RPM for CSS weapons that calculate delay from it
+                if wep.TDMRP_OriginalRPM then
+                    wep.Primary.RPM = wep.TDMRP_OriginalRPM * 3
+                end
             end
         elseif IsValid(ply) and buff.skill == "berserk" and CurTime() >= buff.endTime then
-            -- Restore original fire rate
-            local wep = ply:GetActiveWeapon()
-            if IsValid(wep) and wep.TDMRP_OriginalDelay then
-                wep.Primary.Delay = wep.TDMRP_OriginalDelay
-                wep.TDMRP_OriginalDelay = nil
-            end
+            -- Berserk expired - restore ALL weapons that were modified
+            RestoreAllPlayerWeapons(ply)
         end
     end
+end)
+
+----------------------------------------------------
+-- Hook: When player switches weapon during berserk, restore old weapon
+----------------------------------------------------
+hook.Add("PlayerSwitchWeapon", "TDMRP_BerserkWeaponSwitch", function(ply, oldWep, newWep)
+    if not IsValid(ply) then return end
+    
+    local buff = TDMRP.ActiveSkills.ActiveBuffs[ply]
+    if not buff or buff.skill ~= "berserk" then return end
+    
+    -- If berserk is expired, restore both weapons
+    if CurTime() >= buff.endTime then
+        RestoreWeaponFireRate(oldWep)
+        RestoreWeaponFireRate(newWep)
+        return
+    end
+    
+    -- Berserk still active - restore old weapon to normal
+    -- (new weapon will be modified by Think hook)
+    RestoreWeaponFireRate(oldWep)
 end)
 
 ----------------------------------------------------
