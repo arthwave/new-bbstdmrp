@@ -12,9 +12,17 @@ TDMRP.Accuracy = TDMRP.Accuracy or {}
 ----------------------------------------------------
 
 TDMRP.Accuracy.Config = {
+    -- Global movement penalty reduction (applies to all weapons)
+    -- Set to 0.5 to reduce movement penalties by 50% (user's requested change)
+    movementPenaltyScale = 0.5,       -- Scales down ALL movement penalties globally
+    
+    -- Shotgun-specific additional penalty reduction (stacks with global scale)
+    -- Shotguns get ANOTHER 50% reduction on top of global (0.5 * 0.5 = 0.25 = 75% total reduction)
+    shotgunPenaltyScale = 0.5,        -- Additional shotgun scale (makes them 75% more accurate while moving)
+    
     -- Default movement spread multipliers (used if weapon not in WeaponStats)
-    normalMovingMultiplier = 5,       -- 5x spread when moving for normal guns
-    sniperMovingMultiplier = 15,      -- 15x spread when moving for snipers (50% more than before)
+    normalMovingMultiplier = 5,       -- 5x spread when moving for normal guns (reduced by movementPenaltyScale)
+    sniperMovingMultiplier = 15,      -- 15x spread when moving for snipers (reduced by movementPenaltyScale)
     sniperStillBonus = 0.1,           -- 10% of base spread when standing still (laser accurate)
     
     -- Velocity thresholds
@@ -591,6 +599,18 @@ function TDMRP.Accuracy.GetMovementMultiplier(ply, weaponType, wep)
         end
     end
     
+    -- Apply global penalty scale (50% reduction = 0.5 scale)
+    -- Formula: 1 + (penalty - 1) * scale
+    -- Example: 5x penalty becomes 1 + (5-1)*0.5 = 3x
+    local penaltyReduction = (movePenalty - 1) * (1 - cfg.movementPenaltyScale)
+    movePenalty = movePenalty - penaltyReduction
+    
+    -- Apply additional shotgun-specific penalty reduction (stacks with global)
+    if weaponType == "shotgun" and cfg.shotgunPenaltyScale then
+        penaltyReduction = (movePenalty - 1) * (1 - cfg.shotgunPenaltyScale)
+        movePenalty = movePenalty - penaltyReduction
+    end
+    
     -- Standing still
     if velocity < cfg.stillThreshold then
         if weaponType == "sniper" then
@@ -607,9 +627,10 @@ function TDMRP.Accuracy.GetMovementMultiplier(ply, weaponType, wep)
         -- Snipers: interpolate from still bonus to max penalty, then continue climbing beyond
         local multiplier = Lerp(math.Clamp(moveFraction, 0, 1), cfg.sniperStillBonus, movePenalty)
         
-        -- Beyond walkThreshold, continue scaling upward
+        -- Beyond walkThreshold, continue scaling upward (also scaled by movementPenaltyScale)
         if moveFraction > 1 then
-            multiplier = movePenalty * (1 + (moveFraction - 1) * 0.5)  -- 50% additional penalty per 100 velocity beyond threshold
+            local extraPenalty = (moveFraction - 1) * 0.5 * cfg.movementPenaltyScale  -- Apply scale to extra penalty too
+            multiplier = movePenalty * (1 + extraPenalty)
         end
         
         return multiplier
@@ -617,9 +638,10 @@ function TDMRP.Accuracy.GetMovementMultiplier(ply, weaponType, wep)
         -- Normal guns: interpolate from 1x to max penalty
         local multiplier = Lerp(math.Clamp(moveFraction, 0, 1), 1, movePenalty)
         
-        -- Beyond walkThreshold, continue scaling upward
+        -- Beyond walkThreshold, continue scaling upward (also scaled by movementPenaltyScale)
         if moveFraction > 1 then
-            multiplier = movePenalty * (1 + (moveFraction - 1) * 0.5)
+            local extraPenalty = (moveFraction - 1) * 0.5 * cfg.movementPenaltyScale  -- Apply scale to extra penalty too
+            multiplier = movePenalty * (1 + extraPenalty)
         end
         
         return multiplier

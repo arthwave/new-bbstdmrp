@@ -16,7 +16,7 @@ SWEP.HoldType = "ar2"
 SWEP.Primary.Sound = Sound("Weapon_SCOUT.Single")
 SWEP.Primary.Damage = 50
 SWEP.Primary.RPM = 50  -- Bolt action
-SWEP.Primary.Recoil = 5
+SWEP.Primary.Recoil = 1.5  -- Reduced from 5
 SWEP.Primary.Spread = 0.0005
 SWEP.Primary.ClipSize = 10
 SWEP.Primary.DefaultClip = 10
@@ -24,11 +24,17 @@ SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "smg1"
 SWEP.Primary.NumShots = 1
 
--- Scope settings (8x zoom)
+-- Scope settings (6x zoom, MilDot sniper scope)
 SWEP.UseScope = true
-SWEP.ScopeZooms = {8}
-SWEP.ScopeScale = 0.4
+SWEP.ScopeZooms = {6}
+SWEP.ScopeScale = 0.5
+SWEP.ReticleScale = 0.6
 SWEP.IronSightZoom = 1.3
+
+-- M9K-style scope type (MilDot sniper scope)
+SWEP.Secondary = SWEP.Secondary or {}
+SWEP.Secondary.ScopeZoom = 6
+SWEP.Secondary.UseMilDot = true
 
 SWEP.IronSightsPos = Vector(-6.68, -10.521, 3.4)
 SWEP.IronSightsAng = Vector(0, 0, 0)

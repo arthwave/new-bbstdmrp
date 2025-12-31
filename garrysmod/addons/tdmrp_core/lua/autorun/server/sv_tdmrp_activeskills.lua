@@ -58,6 +58,9 @@ end
 -- Set skill on cooldown
 ----------------------------------------------------
 local function SetCooldown(ply, skillID, duration)
+    -- Skip cooldown for skills that don't have a cooldown (e.g., blink uses charges instead)
+    if not duration then return end
+    
     local steamID = ply:SteamID()
     TDMRP.ActiveSkills.PlayerCooldowns[steamID] = TDMRP.ActiveSkills.PlayerCooldowns[steamID] or {}
     TDMRP.ActiveSkills.PlayerCooldowns[steamID][skillID] = CurTime() + duration

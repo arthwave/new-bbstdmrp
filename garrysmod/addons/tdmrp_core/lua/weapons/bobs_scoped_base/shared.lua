@@ -183,7 +183,7 @@ function SWEP:BoltBack()
 				if(self:GetIronsights() == true) then
 					self.Owner:SetFOV( 0, 0.3 )
 					self:SetIronsights(false)
-					self.Owner:DrawViewModel(true)
+					-- TDMRP FIX: Removed DrawViewModel(true) - PreDrawViewModel hook handles visibility
 				end
 				local boltactiontime = (self.Owner:GetViewModel():SequenceDuration())
 				timer.Simple(boltactiontime + .1, 
@@ -195,7 +195,7 @@ function SWEP:BoltBack()
 							self.IronSightsAng = self.SightsAng					-- Bring it up
 							self.DrawCrosshair = false
 							self:SetIronsights(true, self.Owner)
-							self.Owner:DrawViewModel(false)
+							-- TDMRP FIX: Removed DrawViewModel(false) - PreDrawViewModel hook handles visibility
 						end
 					end 
 				end)
@@ -221,9 +221,7 @@ function SWEP:Reload()
 		self:SetIronsights(false)
 		-- Set the ironsight to false
 		self.Weapon:SetNWBool("Reloading", true)
-		if CLIENT then
-			self.Owner:DrawViewModel(true)
-		end
+		-- TDMRP FIX: Removed DrawViewModel(true) - PreDrawViewModel hook handles visibility
 	end
 	
 	local waitdammit
@@ -241,9 +239,7 @@ function SWEP:Reload()
 		self.IronSightsAng = self.SightsAng					-- Bring it up
 		self.DrawCrosshair = false
 		self:SetIronsights(true, self.Owner)
-		if CLIENT then
-			self.Owner:DrawViewModel(false)
-		end
+		-- TDMRP FIX: Removed DrawViewModel(false) - PreDrawViewModel hook handles visibility
  	elseif self.Owner:KeyDown(IN_SPEED) and self.Weapon:GetClass() == self.Gun then
 		if self.Weapon:GetNextPrimaryFire() <= (CurTime()+0.3) then
 			self.Weapon:SetNextPrimaryFire(CurTime()+0.3)				-- Make it so you can't shoot for another quarter second
@@ -266,7 +262,7 @@ function SWEP:PostReloadScopeCheck()
 		self.IronSightsAng = self.SightsAng					-- Bring it up
 		self.DrawCrosshair = false
 		self:SetIronsights(true, self.Owner)
-		self.Owner:DrawViewModel(false)
+		-- TDMRP FIX: Removed DrawViewModel(false) - PreDrawViewModel hook handles visibility
  	elseif self.Owner:KeyDown(IN_SPEED) and self.Weapon:GetClass() == self.Gun then
 		if self.Weapon:GetNextPrimaryFire() <= (CurTime()+0.3) then
 			self.Weapon:SetNextPrimaryFire(CurTime()+0.3)				-- Make it so you can't shoot for another quarter second
@@ -321,9 +317,7 @@ function SWEP:IronSight()
 	if self.Owner:KeyPressed(IN_SPEED) || self.Owner:KeyPressed(IN_USE) then	-- If you run then
 		self.Owner:SetFOV( 0, 0.2 )
 		self.DrawCrosshair = false
-		if CLIENT then
-			self.Owner:DrawViewModel(true)
-		end
+		-- TDMRP FIX: Removed DrawViewModel(true) - PreDrawViewModel hook handles visibility
 	end	
 
 		if self.Owner:KeyPressed(IN_ATTACK2) and !self.Owner:KeyDown(IN_SPEED) and not (self.Weapon:GetNWBool("Reloading")) then
@@ -332,9 +326,7 @@ function SWEP:IronSight()
 			self.IronSightsAng = self.SightsAng					-- Bring it up
 			self.DrawCrosshair = false
 			self:SetIronsights(true, self.Owner)
-			if CLIENT then
-				self.Owner:DrawViewModel(false)
-			end
+			-- TDMRP FIX: Removed DrawViewModel(false) - PreDrawViewModel hook handles visibility
 		elseif self.Owner:KeyPressed(IN_ATTACK2) and not (self.Weapon:GetNWBool("Reloading")) and self.Owner:KeyDown(IN_SPEED) then
 			if self.Weapon:GetNextPrimaryFire() <= (CurTime()+0.3) then
 				self.Weapon:SetNextPrimaryFire(CurTime()+0.3)				-- Make it so you can't shoot for another quarter second
@@ -350,9 +342,7 @@ function SWEP:IronSight()
 		self:SetIronsights(false, self.Owner)
 		self.DrawCrosshair = self.XHair
 		-- Set the ironsight false
-		if CLIENT then
-			self.Owner:DrawViewModel(true)
-		end
+		-- TDMRP FIX: Removed DrawViewModel(true) - PreDrawViewModel hook handles visibility
 	end
 
 		if self.Owner:KeyDown(IN_ATTACK2) and !self.Owner:KeyDown(IN_USE) and !self.Owner:KeyDown(IN_SPEED) then
@@ -468,16 +458,42 @@ end
 ----------------------------------------------------
 -- TDMRP: PreDrawViewModel hook to properly hide viewmodel when scoped
 -- This is more reliable than DrawViewModel(false) for hiding the gun model
+-- The hook checks ironsights state dynamically each frame, so no state corruption can occur
 ----------------------------------------------------
 if CLIENT then
 	function SWEP:PreDrawViewModel(vm, wep, ply)
-		-- Hide viewmodel when player is in scope mode (holding ATTACK2 and not sprinting)
-		if IsValid(self.Owner) and self.Owner:KeyDown(IN_ATTACK2) 
-		   and self:GetIronsights() == true 
-		   and not self.Owner:KeyDown(IN_SPEED) 
-		   and not self.Owner:KeyDown(IN_USE) then
+		-- Safety check
+		if not IsValid(self) or not IsValid(self.Owner) then return false end
+		
+		-- Only hide viewmodel when:
+		-- 1. Player is in ironsights (M9K_Ironsights is true)
+		-- 2. Player is holding ATTACK2 (scope key)
+		-- 3. Player is NOT sprinting (SPEED)
+		-- 4. Player is NOT using (USE key)
+		-- 5. Weapon is not reloading
+		local isScoped = self:GetIronsights() == true
+		local holdingScope = self.Owner:KeyDown(IN_ATTACK2)
+		local sprinting = self.Owner:KeyDown(IN_SPEED)
+		local using = self.Owner:KeyDown(IN_USE)
+		local reloading = self.Weapon:GetNWBool("Reloading", false)
+		
+		if isScoped and holdingScope and not sprinting and not using and not reloading then
 			return true -- Return true to prevent drawing the viewmodel
 		end
+		
 		return false
+	end
+	
+	-- TDMRP: Ensure viewmodel is visible when deploying weapon
+	local origDeploy = SWEP.Deploy
+	function SWEP:Deploy()
+		-- Reset ironsights state to ensure viewmodel is visible on deploy
+		self:SetIronsights(false)
+		
+		-- Call original deploy
+		if origDeploy then
+			return origDeploy(self)
+		end
+		return true
 	end
 end

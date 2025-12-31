@@ -15,6 +15,7 @@ local CONFIG = {
     LOADOUT_TIMEOUT = 15,           -- Seconds before auto-spawn with defaults
     SPAWN_DELAY = 0.1,              -- Small delay after DarkRP finishes
     FREEZE_DURING_LOADOUT = true,   -- Freeze player during loadout selection
+    RANDOM_COMBAT_LOADOUT = true,  -- Toggle: true = random 2 guns with mods, false = normal loadouts
 }
 
 ----------------------------------------------------
@@ -46,6 +47,216 @@ local function GetPlayerJob(ply)
     if not RPExtraTeams then return nil end
     
     return RPExtraTeams[teamID]
+end
+
+----------------------------------------------------
+-- Helper: Spawn random combat loadout (2 random guns with random prefix/suffix)
+-- Mirrors the exact flow from gemcraft system for proper integration
+----------------------------------------------------
+
+local function SpawnRandomCombatLoadout(ply)
+    if not IsValid(ply) then return end
+    
+    -- Get all available weapon classes (M9K only for proper mixin support)
+    local allWeapons = {}
+    
+    if TDMRP and TDMRP.M9KRegistry then
+        for weaponClass, data in pairs(TDMRP.M9KRegistry) do
+            if data and data.name then
+                -- Registry keys are "m9k_colt1911", wrapper class is "tdmrp_m9k_colt1911"
+                table.insert(allWeapons, "tdmrp_" .. weaponClass)
+            end
+        end
+    end
+    
+    -- Add CSS weapons as fallback
+    if #allWeapons == 0 then
+        local cssWeapons = {
+            "weapon_tdmrp_cs_glock18", "weapon_tdmrp_cs_usp", "weapon_tdmrp_cs_p228",
+            "weapon_tdmrp_cs_five_seven", "weapon_tdmrp_cs_elites", "weapon_tdmrp_cs_desert_eagle",
+            "weapon_tdmrp_cs_mp5a5", "weapon_tdmrp_cs_p90", "weapon_tdmrp_cs_mac10",
+            "weapon_tdmrp_cs_tmp", "weapon_tdmrp_cs_ump_45", "weapon_tdmrp_cs_ak47",
+            "weapon_tdmrp_cs_m4a1", "weapon_tdmrp_cs_aug", "weapon_tdmrp_cs_famas",
+            "weapon_tdmrp_cs_sg552", "weapon_tdmrp_cs_galil", "weapon_tdmrp_cs_pumpshotgun",
+            "weapon_tdmrp_cs_awp", "weapon_tdmrp_cs_scout"
+        }
+        for _, wep in ipairs(cssWeapons) do
+            table.insert(allWeapons, wep)
+        end
+    end
+    
+    if #allWeapons == 0 then
+        print("[TDMRP Random Combat] WARNING: No weapons available!")
+        return
+    end
+    
+    -- Get all available prefixes and suffixes
+    local allPrefixes = {}
+    local allSuffixes = {}
+    
+    if TDMRP and TDMRP.Gems then
+        if TDMRP.Gems.Prefixes then
+            for prefixID, _ in pairs(TDMRP.Gems.Prefixes) do
+                table.insert(allPrefixes, prefixID)
+            end
+        end
+        if TDMRP.Gems.Suffixes then
+            for suffixID, _ in pairs(TDMRP.Gems.Suffixes) do
+                table.insert(allSuffixes, suffixID)
+            end
+        end
+    end
+    
+    print("[TDMRP Random Combat] Starting spawn - Weapons: " .. #allWeapons .. ", Prefixes: " .. #allPrefixes .. ", Suffixes: " .. #allSuffixes)
+    
+    -- Pre-select both weapons and modifiers (avoid duplicate weapons)
+    local weaponChoices = {}
+    local usedWeapons = {}
+    
+    for slot = 1, 2 do
+        local randomWeapon
+        local attempts = 0
+        repeat
+            randomWeapon = allWeapons[math.random(1, #allWeapons)]
+            attempts = attempts + 1
+        until not usedWeapons[randomWeapon] or attempts > 10
+        usedWeapons[randomWeapon] = true
+        
+        local randomPrefix = #allPrefixes > 0 and allPrefixes[math.random(1, #allPrefixes)] or nil
+        local randomSuffix = #allSuffixes > 0 and allSuffixes[math.random(1, #allSuffixes)] or nil
+        
+        weaponChoices[slot] = {
+            class = randomWeapon,
+            prefix = randomPrefix,
+            suffix = randomSuffix
+        }
+        
+        print(string.format("[TDMRP Random Combat] Slot %d: %s + %s + %s", 
+            slot, randomWeapon, randomPrefix or "NO_PREFIX", randomSuffix or "NO_SUFFIX"))
+    end
+    
+    -- STEP 1: Give both weapons first (with small delay between)
+    ply:Give(weaponChoices[1].class)
+    
+    timer.Simple(0.1, function()
+        if not IsValid(ply) then return end
+        ply:Give(weaponChoices[2].class)
+        
+        -- STEP 2: After giving both weapons, apply modifiers (longer delay for full init)
+        timer.Simple(0.3, function()
+            if not IsValid(ply) then return end
+            
+            for slot, choice in ipairs(weaponChoices) do
+                -- Find the weapon entity
+                local wep = nil
+                for _, w in ipairs(ply:GetWeapons()) do
+                    if w:GetClass() == choice.class then
+                        wep = w
+                        break
+                    end
+                end
+                
+                if not IsValid(wep) then
+                    print("[TDMRP Random Combat] ERROR: Could not find weapon " .. choice.class)
+                    continue
+                end
+                
+                -- ========================================
+                -- MIRROR EXACT GEMCRAFT FLOW
+                -- ========================================
+                
+                -- 1. Set tier (Rare for crafted)
+                local tier = 3  -- Rare tier
+                wep:SetNWInt("TDMRP_Tier", tier)
+                
+                -- 2. Mark as crafted
+                wep:SetNWBool("TDMRP_Crafted", true)
+                
+                -- 3. Set prefix
+                if choice.prefix then
+                    wep:SetNWString("TDMRP_PrefixID", choice.prefix)
+                end
+                
+                -- 4. Set suffix and material
+                if choice.suffix then
+                    wep:SetNWString("TDMRP_SuffixID", choice.suffix)
+                    
+                    -- Get suffix data for material
+                    local suffixData = TDMRP.Gems.Suffixes[choice.suffix]
+                    if suffixData and suffixData.material then
+                        -- Set material on NWString (network synced)
+                        wep:SetNWString("TDMRP_Material", suffixData.material)
+                        
+                        -- Store on entity as fallback
+                        wep.TDMRP_StoredMaterial = suffixData.material
+                        
+                        -- Apply material immediately
+                        wep:SetMaterial(suffixData.material)
+                        for i = 0, 31 do
+                            wep:SetSubMaterial(i, suffixData.material)
+                        end
+                        
+                        -- Apply to viewmodel if player is holding this weapon
+                        if ply:GetActiveWeapon() == wep then
+                            local vm = ply:GetViewModel()
+                            if IsValid(vm) then
+                                vm:SetMaterial(suffixData.material)
+                                for i = 0, 31 do
+                                    vm:SetSubMaterial(i, suffixData.material)
+                                end
+                            end
+                        end
+                        
+                        -- Set custom tracer if suffix has one
+                        if suffixData.TracerName then
+                            wep:SetNWString("TDMRP_TracerName", suffixData.TracerName)
+                        end
+                        
+                        print(string.format("[TDMRP Random Combat] Applied material: %s", suffixData.material))
+                    end
+                end
+                
+                -- 5. Apply stat modifiers via unified function
+                if TDMRP.Gems and TDMRP.Gems.ApplyAllCraftModifiers then
+                    TDMRP.Gems.ApplyAllCraftModifiers(wep)
+                end
+                
+                -- 6. Install hooks for suffix effects (fire hooks, hit callbacks, etc.)
+                if TDMRP_WeaponMixin and TDMRP_WeaponMixin.InstallHooks then
+                    TDMRP_WeaponMixin.InstallHooks(wep)
+                end
+                
+                -- 7. Update display name to show "Prefix WeaponName of Suffix"
+                local baseName = wep:GetPrintName() or wep:GetClass()
+                baseName = baseName:gsub("^weapon_", ""):gsub("^tdmrp_m9k_", ""):gsub("^weapon_tdmrp_cs_", "")
+                
+                -- Title case conversion
+                baseName = baseName:gsub("_", " "):gsub("(%a)([%w_']*)", function(first, rest)
+                    return first:upper() .. rest:lower()
+                end)
+                
+                local displayName = ""
+                if choice.prefix and TDMRP.Gems.Prefixes[choice.prefix] then
+                    displayName = TDMRP.Gems.Prefixes[choice.prefix].name .. " "
+                end
+                displayName = displayName .. baseName
+                if choice.suffix and TDMRP.Gems.Suffixes[choice.suffix] then
+                    displayName = displayName .. " " .. TDMRP.Gems.Suffixes[choice.suffix].name
+                end
+                
+                wep:SetNWString("TDMRP_CustomName", displayName)
+                
+                -- 8. Update networked stats for HUD
+                if TDMRP_WeaponMixin and TDMRP_WeaponMixin.SetNetworkedStats then
+                    TDMRP_WeaponMixin.SetNetworkedStats(wep)
+                end
+                
+                print(string.format("[TDMRP Random Combat] SUCCESS Slot %d: %s (Tier %d)", slot, displayName, tier))
+            end
+            
+            print(string.format("[TDMRP Random Combat] Completed spawn for %s with 2 random crafted weapons", ply:Nick()))
+        end)
+    end)
 end
 
 ----------------------------------------------------
@@ -873,21 +1084,34 @@ local function OnPlayerSpawn(ply)
             })
         end
         
-        -- Send loadout menu to client with weapon class arrays, saved selections, and bound weapons
-        net.Start("TDMRP_ShowLoadoutMenu")
-            net.WriteTable(pools.Primary or {})
-            net.WriteTable(pools.Secondary or {})
-            net.WriteTable(pools.Gear or {})
-            net.WriteUInt(savedChoices and savedChoices.primary or 0, 8) -- 0 = no saved choice
-            net.WriteUInt(savedChoices and savedChoices.secondary or 0, 8)
-            net.WriteUInt(savedChoices and savedChoices.gear or 0, 8)
-            net.WriteTable(boundWeaponData)  -- Send bound weapon info for UI
-        net.Send(ply)
-        
-        -- Set timeout
-        timer.Create("TDMRP_LoadoutTimeout_" .. sid, CONFIG.LOADOUT_TIMEOUT, 1, function()
-            HandleLoadoutTimeout(ply)
-        end)
+        -- Check if random combat loadout is enabled
+        if CONFIG.RANDOM_COMBAT_LOADOUT then
+            -- Spawn with random loadout, skip UI
+            SpawnRandomCombatLoadout(ply)
+            
+            -- Complete spawn after delay (bypassLoadout=true skips default weapon giving)
+            timer.Simple(CONFIG.SPAWN_DELAY, function()
+                if IsValid(ply) then
+                    TDMRP.Spawn.CompleteSpawn(ply, nil, nil, nil, true)
+                end
+            end)
+        else
+            -- Send loadout menu to client with weapon class arrays, saved selections, and bound weapons
+            net.Start("TDMRP_ShowLoadoutMenu")
+                net.WriteTable(pools.Primary or {})
+                net.WriteTable(pools.Secondary or {})
+                net.WriteTable(pools.Gear or {})
+                net.WriteUInt(savedChoices and savedChoices.primary or 0, 8) -- 0 = no saved choice
+                net.WriteUInt(savedChoices and savedChoices.secondary or 0, 8)
+                net.WriteUInt(savedChoices and savedChoices.gear or 0, 8)
+                net.WriteTable(boundWeaponData)  -- Send bound weapon info for UI
+            net.Send(ply)
+            
+            -- Set timeout
+            timer.Create("TDMRP_LoadoutTimeout_" .. sid, CONFIG.LOADOUT_TIMEOUT, 1, function()
+                HandleLoadoutTimeout(ply)
+            end)
+        end
         
         print("[TDMRP Spawn] Showing loadout menu for " .. ply:Nick() .. " (" .. job.name .. ")")
     else

@@ -156,183 +156,102 @@ TDMRP.Gems.Suffixes = {
             wep.TDMRP_DoubleShotNextFire = false
         end,
     },
-    
-    of_Shrapnel = {
-        name = "of Shrapnel",
-        effect = "shrapnel",
-        description = "Bullets explode on impact, hitting nearby enemies",
-        stats = { 
-            damage = -0.40,      -- Reduced per-projectile damage for balance
-            rpm = -0.50,         -- 50% fire rate reduction
-            recoil = 0.75,       -- Increased recoil from explosions
-            handling = -0.20,    -- Handling penalty
+
+    of_Momentum = {
+        name = "of Momentum",
+        effect = "momentum",
+        description = "Each shot pushes enemies backward with explosive force",
+        stats = {
+            damage = 0.05,       -- Slight damage boost
+            handling = -0.20,    -- Reduced handling (heavy weapon)
+            rpm = -0.10,         -- Slightly slower fire rate
         },
-        material = "models/props_canal/metalcrate001d",
-        ammoCost = 1,           -- Normal ammo cost (single shot)
-        soundEffect = "tdmrp/suffixsounds/ofshrapnel.mp3",
+        material = "Models/effects/comball_tape",  -- Energy/explosive material
+        ammoCost = 1,           -- Normal ammo cost
         
-        -- Hook: Explosion on bullet hit
+        -- Hook: Apply knockback on hit
         OnBulletHit = function(wep, tr, dmginfo)
-            if not IsValid(wep) then return end
+            if not SERVER then return end
             
+            local hitEntity = tr.Entity
+            if not IsValid(hitEntity) then return end
+            
+            -- Only knock back entities that can be pushed
+            if not (hitEntity:IsPlayer() or hitEntity:IsNPC() or hitEntity:GetPhysicsObject()) then
+                return
+            end
+            
+            -- Calculate knockback direction (from weapon to target)
+            local owner = wep:GetOwner()
+            if not IsValid(owner) then return end
+            
+            local knockbackDir = (tr.HitPos - owner:GetPos()):GetNormalized()
+            local knockbackForce = 500  -- Moderate knockback
+            
+            -- Apply knockback
+            if hitEntity:IsPlayer() or hitEntity:IsNPC() then
+                -- For players/NPCs, use velocity
+                local vel = hitEntity:GetVelocity()
+                hitEntity:SetVelocity(vel + knockbackDir * knockbackForce)
+            else
+                -- For physics objects, use physics
+                local phys = hitEntity:GetPhysicsObject()
+                if IsValid(phys) then
+                    phys:ApplyForceCenter(knockbackDir * knockbackForce * phys:GetMass())
+                end
+            end
+            
+            -- Play impact sound locally at hit position
             local hitPos = tr.HitPos
-            local attacker = wep:GetOwner()
-            if not IsValid(attacker) then return end
+            sound.Play("tdmrp/suffixsounds/ofmomentum.mp3", hitPos, 80, 100, 1.0)
             
-            local explosionRadius = 100
-            local baseDamage = dmginfo:GetDamage()
-            
-            -- Create prop-based shrapnel burst effect (server-side only)
-            if SERVER then
-                local shrapnelCount = 8
-                local shrapnelSpeed = 1200
-                local shrapnelScale = 0.3  -- Scale down rocks to 30% size
-                
-                for i = 1, shrapnelCount do
-                    -- Calculate random direction (cone outward)
-                    local angle = (i / shrapnelCount) * math.pi * 2
-                    local pitch = math.Rand(-45, 45) * math.pi / 180
-                    
-                    local direction = Vector(
-                        math.cos(angle) * math.cos(pitch),
-                        math.sin(angle) * math.cos(pitch),
-                        math.sin(pitch)
-                    ):GetNormalized()
-                    
-                    local velocity = direction * (shrapnelSpeed + math.Rand(-200, 200))
-                    
-                    -- Create rock prop for shrapnel
-                    local prop = ents.Create("prop_physics")
-                    if IsValid(prop) then
-                        prop:SetModel("models/props_junk/rock001a.mdl")
-                        prop:SetPos(hitPos + direction * 15)
-                        prop:SetModelScale(shrapnelScale, 0)
-                        prop:SetColor(Color(255, 165, 0, 255))  -- Orange glow
-                        prop:Spawn()
-                        
-                        -- Store owner and owner's job for damage checks
-                        prop:SetOwner(attacker)
-                        prop.TDMRP_OwnerJob = attacker:Team()
-                        
-                        -- Apply velocity
-                        local phys = prop:GetPhysicsObject()
-                        if IsValid(phys) then
-                            phys:SetVelocity(velocity)
-                        end
-                        
-                        -- Hook damage to prevent friendly fire
-                        prop.OnTakeDamage = function(self, dmginfo)
-                            local victim = dmginfo:GetAttacker()
-                            if IsValid(victim) and victim:IsPlayer() then
-                                -- Don't damage the owner
-                                if victim == attacker then
-                                    return
-                                end
-                                -- Don't damage same job class
-                                if victim:Team() == self.TDMRP_OwnerJob then
-                                    return
-                                end
-                            end
-                            -- Allow damage from other sources
-                        end
-                        
-                        -- Remove prop after 0.5 seconds
-                        timer.Simple(0.5, function()
-                            if IsValid(prop) then
-                                prop:Remove()
-                            end
-                        end)
-                    end
-                end
-            end
-            
-            -- Debounce explosion sound (prevent multiple sounds at same location in quick succession)
-            local soundKey = "ShrapnelExplosion_" .. math.floor(hitPos.x) .. "_" .. math.floor(hitPos.y) .. "_" .. math.floor(hitPos.z)
-            if not TDMRP.LastExplosionSoundTime then
-                TDMRP.LastExplosionSoundTime = {}
-            end
-            local currentTime = CurTime()
-            if not TDMRP.LastExplosionSoundTime[soundKey] or (currentTime - TDMRP.LastExplosionSoundTime[soundKey]) > 0.1 then
-                sound.Play("weapons/explode3.wav", hitPos, 75, 100)
-                TDMRP.LastExplosionSoundTime[soundKey] = currentTime
-            end
-            
-            -- Find all entities (players, NPCs, props) within explosion radius
-            if SERVER then
-                local nearbyEnts = ents.FindInSphere(hitPos, explosionRadius)
-                for _, ent in ipairs(nearbyEnts) do
-                    if not IsValid(ent) then continue end
-                    
-                    -- Skip attacker and the entity that was directly hit
-                    if ent == attacker or ent == tr.Entity then continue end
-                    
-                    -- Damage players and NPCs
-                    if ent:IsPlayer() or ent:IsNPC() then
-                        local distToTarget = hitPos:Distance(ent:GetPos())
-                        
-                        -- Scale damage with distance: full at center (0), zero at radius edge
-                        local damageFalloff = math.max(0, 1 - (distToTarget / explosionRadius))
-                        local explosionDamage = baseDamage * damageFalloff
-                        
-                        if explosionDamage > 0 then
-                            -- Apply damage
-                            local dmg = DamageInfo()
-                            dmg:SetDamage(explosionDamage)
-                            dmg:SetAttacker(attacker)
-                            dmg:SetInflictor(wep)
-                            dmg:SetDamageType(DMG_BLAST)
-                            
-                            -- Players: check team immunity
-                            if ent:IsPlayer() and attacker:IsPlayer() then
-                                if attacker:Team() == ent:Team() then
-                                    continue -- Skip friendly fire
-                                end
-                            end
-                            
-                            -- Apply damage safely
-                            pcall(function() ent:TakeDamage(dmg) end)
-                            
-                            -- Apply knockback away from explosion center
-                            local knockbackDir = (ent:GetPos() - hitPos):GetNormalized()
-                            local knockbackForce = 50 * damageFalloff
-                            if IsValid(ent) then
-                                ent:SetVelocity(ent:GetVelocity() + knockbackDir * knockbackForce)
-                            end
-                        end
-                    -- Damage props (ragdolls and damageable props)
-                    elseif ent:IsRagdoll() or (ent:GetClass() and ent:GetClass():find("prop_")) then
-                        local distToTarget = hitPos:Distance(ent:GetPos())
-                        local damageFalloff = math.max(0, 1 - (distToTarget / explosionRadius))
-                        local explosionDamage = baseDamage * damageFalloff
-                        
-                        if explosionDamage > 0 and (ent:Health() or 0) > 0 then
-                            local dmg = DamageInfo()
-                            dmg:SetDamage(explosionDamage)
-                            dmg:SetAttacker(attacker)
-                            dmg:SetInflictor(wep)
-                            dmg:SetDamageType(DMG_BLAST)
-                            pcall(function() ent:TakeDamage(dmg) end)
-                        end
-                    end
-                end
+            -- Also play sound locally to the weapon owner for hit confirmation
+            if IsValid(owner) and owner:IsPlayer() then
+                owner:EmitSound("tdmrp/suffixsounds/ofmomentum.mp3", 75, 100, 0.7)
             end
         end,
     },
     
-    of_ChainLightning = {
-        name = "of ChainLightning",
-        material = "models/alyx/emptool_glow",
-        description = "Bullets chain to nearby enemies with electrical arcs",
+    of_Frost = {
+        name = "of Frost",
+        effect = "frost",
+        description = "Slows enemies with icy ammunition. Kills explode in frozen shards.",
         stats = {
-            damage = -0.30,      -- Reduced base damage for balance
-            rpm = -0.20,         -- 20% fire rate reduction
-            recoil = 0.5,        -- Slight recoil increase
-            handling = -0.15,    -- Handling penalty
+            damage = -0.15,      -- Slight damage penalty
+            rpm = -0.35,         -- 35% fire rate reduction (deliberate shots)
+            recoil = -0.10,      -- Slight recoil reduction (precision weapon)
+            handling = 0.05,     -- Tiny handling boost (counter slowness)
         },
+        material = "models/props_combine/combine_interface_disp",  -- Ice-like material
         ammoCost = 1,           -- Normal ammo cost
-        soundEffect = "tdmrp/suffixsounds/ofchainlightning1.mp3",
         
-        -- Hook: Send initial shot beam to all clients
+        -- Frost-specific config
+        maxSlowLevel = 50,      -- 50% movement speed reduction cap
+        slowPerHit = 12.5,      -- 12.5% per bullet hit
+        slowDuration = 4,       -- 4 seconds before slow decays
+        explosionRadius = 100,
+        explosionDamage = 25,
+        
+        -- Emit Frost sound as a layer (plays on top of default weapon sound)
+        OnPreFire = function(wep)
+            if not wep.TDMRP_FrostSoundIndex then
+                wep.TDMRP_FrostSoundIndex = 0
+            end
+            wep.TDMRP_FrostSoundIndex = (wep.TDMRP_FrostSoundIndex % 3) + 1
+            local soundIdx = wep.TDMRP_FrostSoundIndex
+            local frostSound = "tdmrp/suffixsounds/offrost" .. soundIdx .. ".mp3"
+            
+            -- Emit Frost sound to layer with default weapon sound
+            local wepEnt = wep
+            timer.Simple(0.01, function()
+                if IsValid(wepEnt) then
+                    wepEnt:EmitSound(frostSound, 75, 100, 1.0)
+                end
+            end)
+        end,
+        
+        -- Hook: Send icicle beam(s) to all clients (muzzle to impact)
+        -- For shotguns, spawn multiple beams (one per pellet)
         OnBulletFired = function(wep)
             if SERVER then
                 local owner = wep:GetOwner()
@@ -349,15 +268,146 @@ TDMRP.Gems.Suffixes = {
                     end
                 end
                 
-                -- Trace to get impact point
-                local tr = util.QuickTrace(owner:EyePos(), owner:GetAimVector() * 10000, owner)
+                -- Determine if shotgun (check class or Primary.NumShots)
+                local numPellets = wep.Primary and wep.Primary.NumShots or 1
+                local isShotgun = numPellets and numPellets > 1
                 
-                -- Send beam to all clients
-                net.Start("TDMRP_ChainBeam")
-                    net.WriteVector(muzzlePos)
-                    net.WriteVector(tr.HitPos)
-                    net.WriteFloat(0.2)  -- 0.2s lifespan
-                net.Broadcast()
+                -- Trace to get impact point(s)
+                local baseTrace = util.QuickTrace(owner:EyePos(), owner:GetAimVector() * 10000, owner)
+                
+                if isShotgun then
+                    -- Send multiple beams for shotgun pellets (spread pattern)
+                    for i = 1, math.min(numPellets, 8) do  -- Cap at 8 visual beams to avoid network spam
+                        -- Calculate spread offset for each pellet
+                        local angleOffset = ((i - 1) / math.max(1, numPellets - 1)) * math.pi * 2
+                        local spreadAmount = 0.15  -- 15% spread variation
+                        local offsetAngle = AngleRand()
+                        offsetAngle:RotateAroundAxis(owner:GetAimVector(), angleOffset)
+                        
+                        local spreadDir = owner:GetAimVector() + offsetAngle:Forward() * spreadAmount
+                        local tr = util.QuickTrace(owner:EyePos(), spreadDir * 10000, owner)
+                        
+                        net.Start("TDMRP_FrostBeam")
+                            net.WriteVector(muzzlePos)
+                            net.WriteVector(tr.HitPos)
+                            net.WriteFloat(0.15)
+                        net.Broadcast()
+                    end
+                else
+                    -- Single beam for rifles/pistols
+                    net.Start("TDMRP_FrostBeam")
+                        net.WriteVector(muzzlePos)
+                        net.WriteVector(baseTrace.HitPos)
+                        net.WriteFloat(0.15)  -- 0.15s lifespan (shorter, colder feel)
+                    net.Broadcast()
+                end
+            end
+        end,
+        
+        -- Hook: Apply slow on bullet hit
+        OnBulletHit = function(wep, tr, dmginfo)
+            if not IsValid(wep) or not SERVER then return end
+            
+            local hitPos = tr.HitPos
+            local hitEntity = tr.Entity
+            local attacker = wep:GetOwner()
+            
+            if not IsValid(attacker) or not IsValid(hitEntity) then return end
+            
+            -- Only apply slow to players and NPCs
+            if hitEntity:IsPlayer() or hitEntity:IsNPC() then
+                -- Trigger server-side frost effect handler
+                TDMRP_ApplyFrostSlow(hitEntity, attacker, wep)
+            end
+            
+            -- Play alternating frost hit sound (round-robin)
+            if not wep.TDMRP_FrostSoundIndex then
+                wep.TDMRP_FrostSoundIndex = 0
+            end
+            wep.TDMRP_FrostSoundIndex = (wep.TDMRP_FrostSoundIndex % 3) + 1
+            local soundFile = "tdmrp/suffixsounds/offrost" .. wep.TDMRP_FrostSoundIndex .. ".mp3"
+            sound.Play(soundFile, hitPos, 75, 100)
+        end,
+        
+        -- Hook: Detect Frost weapon kills
+        OnPlayerDeath = function(victim, attacker, weapon)
+            if not SERVER then return end
+            if not IsValid(attacker) or not IsValid(victim) then return end
+            if not IsValid(weapon) then return end
+            
+            -- Check if killer has a Frost weapon and it was used in the kill
+            local suffixId = weapon:GetNWString("TDMRP_SuffixID", "")
+            if suffixId ~= "of_Frost" then return end
+            
+            -- Trigger frost death explosion
+            TDMRP_FrostDeathExplosion(victim, attacker, weapon)
+        end,
+    },
+    
+    of_ChainLightning = {
+        name = "of ChainLightning",
+        material = "models/alyx/emptool_glow",
+        description = "Bullets chain to nearby enemies with electrical arcs",
+        stats = {
+            damage = -0.30,      -- Reduced base damage for balance
+            rpm = -0.20,         -- 20% fire rate reduction
+            recoil = 0.5,        -- Slight recoil increase
+            handling = -0.15,    -- Handling penalty
+        },
+        ammoCost = 1,           -- Normal ammo cost
+        soundEffect = "tdmrp/suffixsounds/ofchainlightning1.mp3",
+        
+        -- Hook: Send initial shot beam(s) to all clients
+        -- For shotguns, spawn multiple beams (one per pellet)
+        OnBulletFired = function(wep)
+            if SERVER then
+                local owner = wep:GetOwner()
+                if not IsValid(owner) then return end
+                
+                -- Get muzzle position
+                local muzzleAttachment = wep:LookupAttachment("muzzle")
+                local muzzlePos = owner:EyePos()
+                
+                if muzzleAttachment and muzzleAttachment > 0 then
+                    local attachData = wep:GetAttachment(muzzleAttachment)
+                    if attachData then
+                        muzzlePos = attachData.Pos
+                    end
+                end
+                
+                -- Determine if shotgun (check class or Primary.NumShots)
+                local numPellets = wep.Primary and wep.Primary.NumShots or 1
+                local isShotgun = numPellets and numPellets > 1
+                
+                -- Trace to get impact point(s)
+                local baseTrace = util.QuickTrace(owner:EyePos(), owner:GetAimVector() * 10000, owner)
+                
+                if isShotgun then
+                    -- Send multiple beams for shotgun pellets (spread pattern)
+                    for i = 1, math.min(numPellets, 8) do  -- Cap at 8 visual beams to avoid network spam
+                        -- Calculate spread offset for each pellet
+                        local angleOffset = ((i - 1) / math.max(1, numPellets - 1)) * math.pi * 2
+                        local spreadAmount = 0.15  -- 15% spread variation
+                        local offsetAngle = AngleRand()
+                        offsetAngle:RotateAroundAxis(owner:GetAimVector(), angleOffset)
+                        
+                        local spreadDir = owner:GetAimVector() + offsetAngle:Forward() * spreadAmount
+                        local tr = util.QuickTrace(owner:EyePos(), spreadDir * 10000, owner)
+                        
+                        net.Start("TDMRP_ChainBeam")
+                            net.WriteVector(muzzlePos)
+                            net.WriteVector(tr.HitPos)
+                            net.WriteFloat(0.2)  -- 0.2s lifespan
+                        net.Broadcast()
+                    end
+                else
+                    -- Single beam for rifles/pistols
+                    net.Start("TDMRP_ChainBeam")
+                        net.WriteVector(muzzlePos)
+                        net.WriteVector(baseTrace.HitPos)
+                        net.WriteFloat(0.2)  -- 0.2s lifespan
+                    net.Broadcast()
+                end
             end
         end,
         
@@ -551,6 +601,76 @@ TDMRP.Gems.Suffixes = {
             end
             
             print(string.format("[TDMRP ChainLightning] === COMPLETE === Applied %d chains ===", chainsApplied))
+        end,
+    },
+    
+    of_Shatter = {
+        name = "of Shatter",
+        effect = "shatter",
+        description = "Fires explosive rock projectiles that shatter on impact",
+        stats = {
+            damage = -0.20,      -- 20% damage reduction (balanced by AOE)
+            rpm = -0.30,         -- 30% fire rate reduction (projectile weapon)
+            recoil = 0.20,       -- 20% more recoil
+            handling = -0.10,    -- Slight handling penalty
+        },
+        material = "phoenix_storms/thruster",
+        ammoCost = 1,
+        
+        -- Flag to indicate this suffix uses projectile instead of hitscan
+        projectileWeapon = true,
+        
+        -- Hook: Fire projectile instead of bullet
+        OnPreFire = function(wep)
+            -- Mark that we should block the hitscan bullet
+            wep.TDMRP_BlockHitscan = true
+        end,
+        
+        -- Hook: Spawn rock projectile (called after bullet would fire)
+        OnBulletFired = function(wep)
+            if SERVER and TDMRP and TDMRP.Shatter then
+                -- Fire the shatter projectile(s)
+                TDMRP.Shatter.FireFromWeapon(wep)
+            end
+        end,
+        
+        -- Reset hitscan block after firing
+        OnPostFire = function(wep)
+            wep.TDMRP_BlockHitscan = false
+        end,
+    },
+    
+    of_Homing = {
+        name = "of Homing",
+        effect = "homing",
+        description = "Fires homing darts that seek out enemies",
+        stats = {
+            damage = -0.15,
+            rpm = -0.25,
+            handling = -0.10,
+        },
+        material = "models/props_lab/warp_sheet",
+        ammoCost = 1,
+        projectileWeapon = true,
+        OnPreFire = function(wep)
+            wep.TDMRP_BlockHitscan = true
+            print("[TDMRP Homing] OnPreFire - BlockHitscan set to true")
+        end,
+        OnBulletFired = function(wep)
+            print("[TDMRP Homing] OnBulletFired called, SERVER=" .. tostring(SERVER))
+            if SERVER then
+                if TDMRP and TDMRP.Homing and TDMRP.Homing.FireFromWeapon then
+                    print("[TDMRP Homing] Calling FireFromWeapon")
+                    TDMRP.Homing.FireFromWeapon(wep)
+                else
+                    print("[TDMRP Homing] ERROR: TDMRP.Homing.FireFromWeapon not found!")
+                    print("[TDMRP Homing] TDMRP exists: " .. tostring(TDMRP ~= nil))
+                    print("[TDMRP Homing] TDMRP.Homing exists: " .. tostring(TDMRP and TDMRP.Homing ~= nil))
+                end
+            end
+        end,
+        OnPostFire = function(wep)
+            wep.TDMRP_BlockHitscan = false
         end,
     },
 }

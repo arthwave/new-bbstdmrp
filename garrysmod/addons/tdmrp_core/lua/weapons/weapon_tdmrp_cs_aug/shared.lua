@@ -23,11 +23,17 @@ SWEP.Primary.DefaultClip = 30
 SWEP.Primary.Automatic = true
 SWEP.Primary.Ammo = "ar2"
 
--- Scope settings (4x zoom like real AUG)
+-- Scope settings (3x zoom, ACOG scope)
 SWEP.UseScope = true
-SWEP.ScopeZooms = {4}
-SWEP.ScopeScale = 0.4
+SWEP.ScopeZooms = {3}
+SWEP.ScopeScale = 0.5
+SWEP.ReticleScale = 0.6
 SWEP.IronSightZoom = 1.3
+
+-- M9K-style scope type (ACOG scope)
+SWEP.Secondary = SWEP.Secondary or {}
+SWEP.Secondary.ScopeZoom = 3
+SWEP.Secondary.UseACOG = true
 
 SWEP.IronSightsPos = Vector(-5.8, -14.5, 2.6)
 SWEP.IronSightsAng = Vector(2.1, 0, -0.3)

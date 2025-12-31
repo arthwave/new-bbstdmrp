@@ -614,12 +614,18 @@ local function GetRandomPrefix()
 end
 
 -- Helper: Get random suffix (from any tier for now)
-local function GetRandomSuffix()
+-- excludeSuffix: optional suffix ID to exclude from the roll (prevents rolling same suffix)
+local function GetRandomSuffix(excludeSuffix)
     if not TDMRP.Gems or not TDMRP.Gems.Suffixes then return nil end
     
     local keys = {}
     for k, _ in pairs(TDMRP.Gems.Suffixes) do
-        table.insert(keys, k)
+        -- Skip if this is the suffix to exclude
+        if excludeSuffix and k == excludeSuffix then
+            -- Don't add to keys
+        else
+            table.insert(keys, k)
+        end
     end
     
     if #keys == 0 then return nil end
@@ -909,8 +915,11 @@ net.Receive("TDMRP_RollSuffix", function(len, ply)
     -- Consume sapphire
     ConsumeGem(ply, "blood_sapphire", 1)
     
-    -- Roll random suffix
-    local suffixId = GetRandomSuffix()
+    -- Get current suffix to exclude it from rolling
+    local currentSuffixId = wep:GetNWString("TDMRP_SuffixID", "")
+    
+    -- Roll random suffix (excluding current suffix if it exists)
+    local suffixId = GetRandomSuffix(currentSuffixId ~= "" and currentSuffixId or nil)
     if not suffixId then
         net.Start("TDMRP_CraftResult")
         net.WriteBool(false)

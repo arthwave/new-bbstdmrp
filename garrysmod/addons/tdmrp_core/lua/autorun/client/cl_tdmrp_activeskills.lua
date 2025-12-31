@@ -51,8 +51,8 @@ net.Receive("TDMRP_SkillActivated", function()
     local skillData = TDMRP.ActiveSkills.GetSkillData(skillID)
     if not skillData then return end
     
-    -- If this is our skill, activate vignette
-    if activator == LocalPlayer() then
+    -- If this is our skill, activate vignette (only if skill has a duration)
+    if activator == LocalPlayer() and skillData.duration then
         TDMRP.ActiveSkills.ActiveVignette = {
             color = skillData.vignetteColor,
             endTime = CurTime() + skillData.duration,

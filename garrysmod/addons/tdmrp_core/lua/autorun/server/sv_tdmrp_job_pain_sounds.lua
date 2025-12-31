@@ -7,14 +7,14 @@ if not SERVER then return end
 
 -- Hook: EntityTakeDamage to trigger pain sounds
 hook.Add("EntityTakeDamage", "TDMRP_JobPainSounds", function(target, dmginfo)
-    -- Play hit sound on ANY damage (players and NPCs) - LOUD and PROMINENT
-    if IsValid(target) then
+    -- Play hit sound only on players and NPCs, not props/doors/world
+    if IsValid(target) and (target:IsPlayer() or target:IsNPC()) then
         target:EmitSound("tdmrp/quake/newhitsound1.mp3", 160, 100, 1, CHAN_AUTO)
     end
     
-    -- Also emit to attacker (player or NPC)
+    -- Also emit to attacker (only if player or NPC)
     local attacker = dmginfo:GetAttacker()
-    if IsValid(attacker) then
+    if IsValid(attacker) and (attacker:IsPlayer() or attacker:IsNPC()) then
         attacker:EmitSound("tdmrp/quake/newhitsound1.mp3", 160, 100, 1, CHAN_AUTO)
     end
     

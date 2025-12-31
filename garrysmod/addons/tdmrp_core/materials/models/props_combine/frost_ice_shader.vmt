@@ -1,0 +1,60 @@
+"VertexLitGeneric"
+{
+	// Ice/Frost shader based on Combine interface material
+	// Custom material for TDMRP Frost suffix weapon bullets
+	
+	"$baseTexture" "models/props_combine/combine_interface_disp"
+	"$bumpmap" "models/props_combine/combine_interface_disp_bump"
+	"$surfaceprop" "ice"
+	
+	// Translucent ice effect
+	"$translucent" 1
+	"$alphatest" 0
+	"$alphatestreferencevalue" 0.5
+	
+	// Glow/self-illumination for icy appearance
+	"$selfillum" 1
+	"$selfillumtint" "[0.3 0.6 1.0]"
+	"$selfillummask" "models/props_combine/combine_interface_disp"
+	
+	// Reflection properties for ice-like shine
+	"$envmap" "env_cubemap"
+	"$envmapmask" "models/props_combine/combine_interface_disp"
+	"$envmaptint" "[0.2 0.4 1.0]"
+	
+	// Specular highlight (glossy ice)
+	"$phong" 1
+	"$phongexponent" 30
+	"$phongboost" 2
+	"$phongtint" "[0.5 0.8 1.0]"
+	
+	// Rim light for edge glow
+	"$rimlight" 1
+	"$rimlightexponent" 2
+	"$rimlightboost" 1
+	"$rimligtmask" 1
+	"$rimmask" 1
+	
+	// Texture blending modes
+	"$basemaptint" "[0.6 0.8 1.0]"
+	"$basemapalphaphongmask" 1
+	"$basemapmask" 1
+	
+	// Scroll effect for icy appearance (subtle animation)
+	"$scrollvar" "$baseTexture"
+	"$scrollrate" "0.01"
+	
+	// Cloaking/visibility effects (optional Combine effect)
+	"$cloakfactor" 0
+	"$cloakfactorframes" 0
+	
+	Proxies
+	{
+		// Optional: Add electrical/frozen effect
+		SelectFirstIfNonZero
+		{
+			"resultVar" "$selfillumfresnel"
+			"input" "$selfillumfresnel"
+		}
+	}
+}

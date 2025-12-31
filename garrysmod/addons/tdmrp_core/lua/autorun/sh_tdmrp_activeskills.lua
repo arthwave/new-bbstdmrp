@@ -2,6 +2,10 @@
 -- TDMRP Active Skills System - Shared Definitions
 ----------------------------------------------------
 
+if SERVER then
+    AddCSLuaFile()
+end
+
 TDMRP = TDMRP or {}
 TDMRP.ActiveSkills = TDMRP.ActiveSkills or {}
 
@@ -104,6 +108,17 @@ TDMRP.ActiveSkills.Skills = {
         vignetteColor = Color(150, 200, 150, 80), -- Light green
         healAmount = 5, -- HP per second
         description = "Regenerate 5 HP per second for 20 seconds"
+    },
+    
+    blink = {
+        name = "Blink",
+        charges = 3,
+        chargeRechargeTime = 3, -- Each charge recharges individually every 3 seconds
+        blinkDistance = 400,
+        sound = "tdmrp/skills/blinkmain.mp3",
+        layerSounds = { "tdmrp/skills/blinklayer1.mp3", "tdmrp/skills/blinklayer2.mp3" },
+        vignetteColor = Color(100, 200, 255, 80), -- Light blue
+        description = "Teleport 400 units forward (up to 3 times, 15s recharge per charge)"
     }
 }
 
@@ -133,7 +148,10 @@ TDMRP.ActiveSkills.JobSkills = {
     
     -- Regeneration Users
     ["Police Recruit"] = "regeneration",
-    ["Gangster Initiate"] = "regeneration"
+    ["Gangster Initiate"] = "regeneration",
+    
+    -- Blink Users (Recon)
+    ["Recon"] = "blink"
 }
 
 ----------------------------------------------------

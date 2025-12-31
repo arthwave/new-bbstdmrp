@@ -86,7 +86,7 @@ local function GetFilteredWeapons()
         ["weapon_tdmrp_cs_knife"] = { name = "Knife", type = "melee", worldModel = "models/weapons/w_knife_t.mdl", price = 200 },
     }
     
-    -- M9K weapons metadata (42 weapons with valid bases)
+    -- M9K weapons metadata (46 weapons - added 4 more shotguns)
     local M9K_WEAPONS = {
         -- Pistols (5)
         ["tdmrp_m9k_colt1911"] = { name = "Colt 1911", type = "pistol", price = 800 },
@@ -128,11 +128,15 @@ local function GetFilteredWeapons()
         ["tdmrp_m9k_g3a3"] = { name = "G3A3", type = "rifle", price = 4000 },
         ["tdmrp_m9k_m16a4_acog"] = { name = "M16A4 ACOG", type = "rifle", price = 4200 },
         ["tdmrp_m9k_acr"] = { name = "ACR", type = "rifle", price = 4800 },
-        -- Shotguns (3)
+        -- Shotguns (7 with wrapper folders - excludes mossberg590, ithacam37, striker12 per DO NOT USE list)
         ["tdmrp_m9k_spas12"] = { name = "SPAS-12", type = "shotgun", price = 2500 },
         ["tdmrp_m9k_1887winchester"] = { name = "1887 Winchester", type = "shotgun", price = 2200 },
         ["tdmrp_m9k_jackhammer"] = { name = "Jackhammer", type = "shotgun", price = 3500 },
-        -- Snipers (2)
+        ["tdmrp_m9k_browningauto5"] = { name = "Browning Auto-5", type = "shotgun", price = 2400 },
+        ["tdmrp_m9k_dbarrel"] = { name = "Double Barrel", type = "shotgun", price = 2000 },
+        ["tdmrp_m9k_m3"] = { name = "Benelli M3", type = "shotgun", price = 2300 },
+        ["tdmrp_m9k_remington870"] = { name = "Remington 870", type = "shotgun", price = 2100 },
+        -- Snipers (2 - excludes m24, svu, dragunov per DO NOT USE list)
         ["tdmrp_m9k_intervention"] = { name = "Intervention", type = "sniper", price = 6000 },
         ["tdmrp_m9k_barret_m82"] = { name = "Barrett M82", type = "sniper", price = 8000 },
         -- LMGs (2)

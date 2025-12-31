@@ -28,6 +28,7 @@ if SERVER then
     util.AddNetworkString("TDMRP_ShotgunModeChanged")
     util.AddNetworkString("TDMRP_ChainLightningVis")
     util.AddNetworkString("TDMRP_ChainBeam")
+    util.AddNetworkString("TDMRP_FrostBeam")
     
     -- Network handler for slug toggle requests
     net.Receive("TDMRP_RequestSlugToggle", function(len, ply)
@@ -360,9 +361,59 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
                 )
             end
         end)
+        
+        -- Frost Beam Rendering
+        -- Renders icicle beam arcs for of_Frost suffix
+        local activeFrostBeams = {}
+        
+        -- Receive frost beam data from server
+        net.Receive("TDMRP_FrostBeam", function()
+            local startPos = net.ReadVector()
+            local endPos = net.ReadVector()
+            local lifespan = net.ReadFloat()
+            
+            table.insert(activeFrostBeams, {
+                startPos = startPos,
+                endPos = endPos,
+                dieTime = CurTime() + lifespan,
+                createdAt = CurTime(),
+                lifespan = lifespan
+            })
+        end)
+        
+        -- Render frost beams each frame
+        hook.Add("PostDrawTranslucentRenderables", "TDMRP_FrostBeamRender", function()
+            if #activeFrostBeams == 0 then return end
+            
+            local currentTime = CurTime()
+            
+            for i = #activeFrostBeams, 1, -1 do
+                local beam = activeFrostBeams[i]
+                
+                -- Remove expired beams
+                if currentTime > beam.dieTime then
+                    table.remove(activeFrostBeams, i)
+                    continue
+                end
+                
+                -- Calculate fade (alpha based on remaining life)
+                local elapsed = currentTime - beam.createdAt
+                local frac = elapsed / beam.lifespan
+                local alpha = 1 - frac
+                
+                -- Draw icicle beam with physbeam material (cyan/ice color)
+                render.SetMaterial(Material("cable/physbeam"))
+                render.DrawBeam(
+                    beam.startPos,
+                    beam.endPos,
+                    5,  -- Width (slightly narrower than chain lightning)
+                    0,  -- Texture start
+                    1,  -- Texture end
+                    Color(100, 220, 255, 200 * alpha)  -- Cyan with slight transparency
+                )
+            end
+        end)
     end
-    
-    -------------------------------------------------
     -- Wrap PrimaryAttack (fire sound, muzzle, RPM)
     -- Also bypasses M9K's sprint check
     -------------------------------------------------
@@ -547,6 +598,15 @@ function TDMRP_WeaponMixin.InstallHooks(wep)
     -------------------------------------------------
     wep.ShootBullet = function(self, damage, arg2, arg3, arg4)
         if not IsValid(self) then return end
+        
+        -- Block hitscan for projectile-based suffixes (e.g., of_Shatter)
+        -- The projectile system handles damage instead
+        if self.TDMRP_BlockHitscan then
+            self.TDMRP_BlockHitscan = nil  -- Reset flag for next shot
+            -- Still call OnBulletFired so the projectile suffix can spawn its projectile
+            TDMRP_WeaponMixin.RunModifierHook(self, "OnBulletFired")
+            return  -- Don't fire hitscan bullet
+        end
         
         -- Detect signature: CSS passes 3 args, M9K passes 4
         -- CSS: (damage, numbullets, aimcone) - arg4 is nil
@@ -1499,8 +1559,8 @@ end
 function TDMRP_WeaponMixin.IsSlugEnabled(wep)
     if not IsValid(wep) then return false end
     
-    -- Get base M9K class
-    local baseClass = string.gsub(wep:GetClass(), "^tdmrp_", "")
+    -- Get base M9K class (strip tdmrp_ prefix)
+    local baseClass = string.gsub(wep:GetClass(), "tdmrp_", "")
     local meta = TDMRP.M9KRegistry and TDMRP.M9KRegistry[baseClass]
     
     return meta and meta.slugEnabled == true

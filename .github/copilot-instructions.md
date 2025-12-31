@@ -390,6 +390,71 @@ wep:GetNWString("TDMRP_SuffixID", "")  -- e.g., "of_Burning"
 
 ---
 
+## Projectile-Based Suffix Architecture
+
+For suffixes that replace hitscan bullets with projectiles (e.g., `of_Shatter`, `of_Rocket`, etc.), follow this pattern:
+
+### Required Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| **SENT Entity** | `lua/entities/sent_tdmrp_<name>/` | Projectile physics, collision, effects |
+| **Server Spawner** | `lua/autorun/server/sv_tdmrp_<name>.lua` | `TDMRP.<Name>.FireFromWeapon(wep)` |
+| **Client Effects** | `lua/autorun/client/cl_tdmrp_<name>.lua` | Visual effects (explosions, trails) |
+| **Suffix Definition** | `sh_tdmrp_gemcraft.lua` | Hooks + `projectileWeapon = true` flag |
+
+### Suffix Hook Pattern
+
+```lua
+of_Example = {
+    name = "of Example",
+    projectileWeapon = true,  -- Flag for projectile-based suffix
+    
+    OnPreFire = function(wep)
+        wep.TDMRP_BlockHitscan = true  -- Block hitscan bullet
+    end,
+    
+    OnBulletFired = function(wep)
+        if SERVER and TDMRP and TDMRP.Example then
+            TDMRP.Example.FireFromWeapon(wep)  -- Spawn projectile
+        end
+    end,
+    
+    OnPostFire = function(wep)
+        wep.TDMRP_BlockHitscan = false  -- Reset flag
+    end,
+}
+```
+
+### Critical: Hitscan Blocking
+
+In `sh_tdmrp_weapon_mixin.lua`, the `ShootBullet` wrapper checks `wep.TDMRP_BlockHitscan`:
+- If `true`: Calls `OnBulletFired` hook (spawns projectile), then returns early (no hitscan)
+- If `false`: Normal hitscan bullet path
+
+### SENT Entity Structure
+
+```
+lua/entities/sent_tdmrp_<name>/
+├── shared.lua   -- ENT.Type, settings (speed, gravity, radius), NetworkVars
+├── init.lua     -- Server: physics, collision, damage dealing
+└── cl_init.lua  -- Client: rendering, trails, effects
+```
+
+### Sound Layering
+
+Always layer the suffix sound WITH the original gun sound:
+```lua
+-- Play original gun sound first
+if wep.Primary and wep.Primary.Sound then
+    wep:EmitSound(wep.Primary.Sound, 75, 100, 0.9)
+end
+-- Then layer suffix sound on top
+wep:EmitSound("tdmrp/suffixsounds/ofsuffix.mp3", 80, 100, 1.0)
+```
+
+---
+
 ## Notes for AI Edits
 
 - **Always use `tdmrp_m9k_*`** - This is non-negotiable, m9k_* breaks everything

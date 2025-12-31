@@ -58,7 +58,7 @@ function SWEP:PrimaryAttack()
     })
     
     if tr.Hit then
-        if tr.Entity and IsValid(tr.Entity) then
+        if tr.Entity and IsValid(tr.Entity) and tr.Entity.TakeDamageInfo then
             local dmginfo = DamageInfo()
             dmginfo:SetDamage(self.Primary.Damage)
             dmginfo:SetAttacker(self.Owner)
@@ -128,35 +128,46 @@ function SWEP:SecondaryAttack()
         knife.ThrownBy = self.Owner
         knife.KnifeDamage = self.Secondary.Damage or 85
         knife.SpawnTime = CurTime()
+        knife.HasHit = false
         
-        -- Handle collision damage
-        knife:AddCallback("PhysicsCollide", function(ent, data)
-            if not ent.ThrownKnife then return end
+        -- Handle touch/collision damage using a hook
+        local function OnTouchKnife(ent, hitEnt)
+            if not IsValid(ent) or ent.HasHit then return end
             if CurTime() - ent.SpawnTime < 0.1 then return end  -- Grace period
             
-            local hitEnt = data.HitEntity
             if IsValid(hitEnt) and hitEnt ~= ent.ThrownBy then
                 if hitEnt:IsPlayer() or hitEnt:IsNPC() then
+                    ent.HasHit = true  -- Mark as hit to prevent multi-hit
+                    
                     local dmginfo = DamageInfo()
                     dmginfo:SetDamage(ent.KnifeDamage)
                     dmginfo:SetAttacker(ent.ThrownBy or Entity(0))
                     dmginfo:SetInflictor(ent)
                     dmginfo:SetDamageType(DMG_SLASH)
-                    dmginfo:SetDamagePosition(data.HitPos)
                     hitEnt:TakeDamageInfo(dmginfo)
                     
                     -- Play hit sound
                     ent:EmitSound("weapons/knife/knife_hitwall1.wav")
+                    
+                    -- Remove after hit
+                    timer.Simple(0.5, function()
+                        if IsValid(ent) then
+                            ent:Remove()
+                        end
+                    end)
                 end
             end
-            
-            -- Remove after a few seconds
-            timer.Simple(5, function()
-                if IsValid(ent) then
-                    ent:Remove()
-                end
-            end)
-        end)
+        end
+        
+        -- Use PhysicsCollide callback (more reliable)
+        knife.PhysicsCollide = function(ent, data)
+            OnTouchKnife(ent, data.HitEntity)
+        end
+        
+        -- Also add a touch hook as backup
+        function knife:Touch(ent)
+            OnTouchKnife(self, ent)
+        end
         
         -- Safety remove
         timer.Simple(10, function()

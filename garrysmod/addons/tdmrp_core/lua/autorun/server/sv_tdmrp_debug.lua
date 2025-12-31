@@ -196,6 +196,7 @@ concommand.Add("tdmrp_setsuffix", function(ply, cmd, args)
     if not suffixId then
         ply:ChatPrint("[TDMRP] Usage: tdmrp_setsuffix <suffix_id>")
         ply:ChatPrint("[TDMRP] Examples: of_Burning, of_Freezing, of_Piercing, of_Shocking, of_Bleeding")
+        ply:ChatPrint("[TDMRP] Projectile: of_Shatter, of_Homing")
         ply:ChatPrint("[TDMRP] Tier 2: of_Inferno, of_Blizzard, of_Shattering, of_Wounding, of_Tempest")
         ply:ChatPrint("[TDMRP] Tier 3+: of_Hellfire, of_Lightning, of_Cataclysm, of_Oblivion, etc.")
         return

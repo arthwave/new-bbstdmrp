@@ -262,6 +262,11 @@ function SWEP:PrimaryAttack()
     if not IsValid(self.Owner) then return end
     if self.Owner:WaterLevel() > 2 then return end
     
+    -- Run suffix OnPreFire hook (for Doubleshot flag, etc)
+    if TDMRP_WeaponMixin and TDMRP_WeaponMixin.RunModifierHook then
+        TDMRP_WeaponMixin.RunModifierHook(self, "OnPreFire")
+    end
+    
     local delay = self.Primary.Delay
     if not delay or delay <= 0 then
         delay = 60 / (self.Primary.RPM or 600)
@@ -294,6 +299,7 @@ end
 
 ----------------------------------------------------
 -- RecoilPower - Determines accuracy based on movement/stance
+-- Now integrates with TDMRP.Accuracy system for consistent penalties
 ----------------------------------------------------
 function SWEP:RecoilPower()
     if not IsValid(self.Owner) then return end
@@ -302,6 +308,11 @@ function SWEP:RecoilPower()
     local recoil = self.Primary.Recoil or 0.5
     local numShots = self.Primary.NumShots or 1
     local cone = self.Primary.Cone or self.Primary.Spread or 0.02
+    
+    -- Apply TDMRP accuracy system if available
+    if TDMRP and TDMRP.Accuracy and TDMRP.Accuracy.GetCurrentSpread then
+        cone = TDMRP.Accuracy.GetCurrentSpread(self.Owner, self)
+    end
     
     if not self.Owner:IsOnGround() then
         -- In air
@@ -313,7 +324,7 @@ function SWEP:RecoilPower()
             self.Owner:ViewPunch(Angle(math.Rand(-0.5, -2.5) * (recoil * 2.5), math.Rand(-1, 1) * (recoil * 2.5), 0))
         end
     elseif self.Owner:KeyDown(bit.bor(IN_FORWARD, IN_BACK, IN_MOVELEFT, IN_MOVERIGHT)) then
-        -- Moving
+        -- Moving (spread already adjusted by accuracy system)
         if self:GetIronsights() then
             self:CSShootBullet(dmg, recoil / 2, numShots, cone)
             self.Owner:ViewPunch(Angle(math.Rand(-0.5, -2.5) * (recoil / 1.5), math.Rand(-1, 1) * (recoil / 1.5), 0))
@@ -351,6 +362,11 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
     numbul = numbul or 1
     cone = cone or 0.01
     
+    -- Check for Doubleshot suffix - if flag set, double the bullets
+    if self.TDMRP_DoubleShotNextFire then
+        numbul = numbul * 2
+    end
+    
     local bullet = {}
     bullet.Num = numbul
     bullet.Src = self.Owner:GetShootPos()
@@ -362,6 +378,16 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
     bullet.Callback = TDMRP_HitImpact  -- TDMRP integrated callback
     
     self.Owner:FireBullets(bullet)
+    
+    -- Run suffix OnBulletFired hook (for tracers, etc)
+    if TDMRP_WeaponMixin and TDMRP_WeaponMixin.RunModifierHook then
+        TDMRP_WeaponMixin.RunModifierHook(self, "OnBulletFired", {
+            numBullets = numbul,
+            damage = dmg,
+            spread = cone
+        })
+    end
+    
     self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
     self.Owner:MuzzleFlash()
     self.Owner:SetAnimation(PLAYER_ATTACK1)

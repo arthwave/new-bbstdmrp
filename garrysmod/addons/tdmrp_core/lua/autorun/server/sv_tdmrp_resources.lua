@@ -5,6 +5,9 @@ if SERVER then
     resource.AddFile("sound/tdmrp/skills/healingaura1.wav")
     resource.AddFile("sound/tdmrp/skills/speed1.wav")
     resource.AddFile("sound/tdmrp/skills/regeneration.mp3")
+    resource.AddFile("sound/tdmrp/skills/blinkmain.mp3")
+    resource.AddFile("sound/tdmrp/skills/blinklayer1.mp3")
+    resource.AddFile("sound/tdmrp/skills/blinklayer2.mp3")
     resource.AddFile("sound/tdmrp/slugsounds/slugshotnew1.wav")
     resource.AddFile("sound/tdmrp/slugsounds/slugshotnew2.wav")
     resource.AddFile("sound/tdmrp/slugsounds/slugshotnew3.wav")
@@ -23,8 +26,27 @@ if SERVER then
     resource.AddFile("sound/tdmrp/quake/hitsound.mp3")
     resource.AddFile("sound/tdmrp/quake/newhitsound1.mp3")
     resource.AddFile("sound/tdmrp/suffixsounds/ofdoubleshot1.mp3")
-    resource.AddFile("sound/tdmrp/suffixsounds/ofshrapnel.mp3")
     resource.AddFile("sound/tdmrp/suffixsounds/ofchainlightning1.mp3")
+    
+    -- Frost Suffix Sounds
+    resource.AddFile("sound/tdmrp/suffixsounds/offrost1.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/offrost2.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/offrost3.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/offrostdeath.mp3")
+    
+    -- Momentum Suffix Sound
+    resource.AddFile("sound/tdmrp/suffixsounds/ofmomentum.mp3")
+    
+    -- Shatter Suffix Sounds
+    resource.AddFile("sound/tdmrp/suffixsounds/ofshatter1.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/ofshatter2.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/shatterimpact1.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/shatterimpact2.mp3")
+    
+    -- Homing Suffix Sounds
+    resource.AddFile("sound/tdmrp/suffixsounds/ofhoming1.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/ofhoming2.mp3")
+    -- (Manhack sounds are built-in HL2: mh_engine_loop1.wav, mh_blade_snick1.wav, grind_flesh1/2.wav)
     
     -- Combat Voice Lines (Cop Kill Confirmed)
     resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed1.mp3")
@@ -53,6 +75,27 @@ if SERVER then
     resource.AddFile("sound/tdmrp/cvoice/crimenemyspotted3.mp3")
     
     resource.AddFile("materials/suffixmat/steel_normal.vmt")
+    resource.AddFile("materials/suffixmat/frost_ice_shader.vmt")
+    
+    -- M9K/CSS Scope Materials (ACOG, MilDot, etc.)
+    resource.AddFile("materials/scope/gdcw_scopesight.vmt")
+    resource.AddFile("materials/scope/gdcw_scopesight.vtf")
+    resource.AddFile("materials/scope/gdcw_closedsight.vmt")
+    resource.AddFile("materials/scope/gdcw_closedsight.vtf")
+    resource.AddFile("materials/scope/gdcw_acogchevron.vmt")
+    resource.AddFile("materials/scope/gdcw_acogchevron.vtf")
+    resource.AddFile("materials/scope/gdcw_acogcross.vmt")
+    resource.AddFile("materials/scope/gdcw_acogcross.vtf")
+    resource.AddFile("materials/scope/gdcw_svdsight.vmt")
+    resource.AddFile("materials/scope/gdcw_svdsight.vtf")
+    resource.AddFile("materials/scope/gdcw_parabolicsight.vmt")
+    resource.AddFile("materials/scope/gdcw_parabolicsight.vtf")
+    resource.AddFile("materials/scope/gdcw_elcanreticle.vmt")
+    resource.AddFile("materials/scope/gdcw_elcanreticle.vtf")
+    resource.AddFile("materials/scope/gdcw_elcansight.vmt")
+    resource.AddFile("materials/scope/gdcw_elcansight.vtf")
+    resource.AddFile("materials/scope/aimpoint.vmt")
+    resource.AddFile("materials/scope/aimpoint.vtf")
     resource.AddFile("sound/physics/metal/metal_impact_hard1.wav") 
     resource.AddFile("sound/physics/metal/metal_impact_hard2.wav")
     resource.AddFile("sound/physics/metal/metal_impact_hard3.wav")

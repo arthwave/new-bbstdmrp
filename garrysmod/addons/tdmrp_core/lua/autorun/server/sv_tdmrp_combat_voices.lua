@@ -165,10 +165,14 @@ local function TryPlayKillConfirmed(attacker, victim)
     local soundTable = faction == "cop" and SOUNDS.cop_kill or SOUNDS.criminal_kill
     local soundPath = GetRandomSound(soundTable)
     
-    -- Play sound at attacker's location
-    PlayLocalSound(attacker, soundPath)
+    -- Delay sound by 1.75 seconds to avoid interference with combat sounds
+    timer.Simple(1.75, function()
+        if IsValid(attacker) then
+            PlayLocalSound(attacker, soundPath)
+        end
+    end)
     
-    print(string.format("[TDMRP Combat Voices] %s (%s) Kill Confirmed vs %s - %s", 
+    print(string.format("[TDMRP Combat Voices] %s (%s) Kill Confirmed (delayed 1.75s) vs %s - %s", 
         attacker:Nick(), faction, victim:Nick(), soundPath))
 end
 

@@ -1,7 +1,8 @@
 ----------------------------------------------------
 -- TDMRP CS:S Scoped Weapon Base
 -- Base class for scoped CSS weapons (snipers, AUG, SG552)
--- Scope rendering ported from weapon_real_base_snip
+-- Scope rendering ported from bobs_scoped_base (M9K)
+-- Uses HOLD-TO-SCOPE system like M9K weapons
 ----------------------------------------------------
 
 if SERVER then
@@ -14,15 +15,25 @@ SWEP.IsTDMRPWeapon = true
 SWEP.Spawnable = false
 SWEP.AdminSpawnable = false
 
--- Scope defaults
+-- Scope defaults (M9K-style flags)
 SWEP.UseScope = true
 SWEP.ScopeZooms = {4}
-SWEP.ScopeScale = 0.4
+SWEP.ScopeScale = 0.5
+SWEP.ReticleScale = 0.6
 SWEP.IronSightZoom = 1.3
-SWEP.DrawParabolicSights = false
+SWEP.DrawCrosshair = false
+SWEP.XHair = false  -- For returning crosshair after scope
 
--- Scope state
-SWEP.CurScopeZoom = 1
+-- M9K-style scope type flags (only set ONE to true per weapon)
+SWEP.Secondary = SWEP.Secondary or {}
+SWEP.Secondary.ScopeZoom = 4
+SWEP.Secondary.UseACOG = false
+SWEP.Secondary.UseMilDot = false
+SWEP.Secondary.UseSVD = false
+SWEP.Secondary.UseParabolic = false
+SWEP.Secondary.UseElcan = false
+SWEP.Secondary.UseGreenDuplex = false
+SWEP.Secondary.UseAimpoint = false
 
 -- Recursion guard for Initialize
 local initializingScopedWeapon = {}
@@ -56,7 +67,7 @@ function SWEP:InitScopeTables()
     local iScreenWidth = ScrW()
     local iScreenHeight = ScrH()
     
-    -- Calculate scope geometry based on ScopeScale (same as weapon_real_base_snip)
+    -- Calculate scope geometry (same as bobs_scoped_base)
     self.ScopeTable = {}
     self.ScopeTable.l = iScreenHeight * self.ScopeScale
     self.ScopeTable.x1 = 0.5 * (iScreenWidth + self.ScopeTable.l)
@@ -71,7 +82,7 @@ function SWEP:InitScopeTables()
     -- Fix for proper scope size
     self.ScopeTable.l = (iScreenHeight + 1) * self.ScopeScale
     
-    -- Quad tables for filling corners
+    -- Quad tables for filling corners (black borders)
     self.QuadTable = {}
     self.QuadTable.x1 = 0
     self.QuadTable.y1 = 0
@@ -97,71 +108,71 @@ function SWEP:InitScopeTables()
     self.LensTable.w = 2 * self.ScopeTable.l
     self.LensTable.h = 2 * self.ScopeTable.l
     
-    -- Crosshair table
-    self.CrossHairTable = {}
-    self.CrossHairTable.x11 = 0
-    self.CrossHairTable.y11 = 0.5 * iScreenHeight
-    self.CrossHairTable.x12 = iScreenWidth
-    self.CrossHairTable.y12 = self.CrossHairTable.y11
-    self.CrossHairTable.x21 = 0.5 * iScreenWidth
-    self.CrossHairTable.y21 = 0
-    self.CrossHairTable.x22 = 0.5 * iScreenWidth
-    self.CrossHairTable.y22 = iScreenHeight
+    -- Reticle table for ACOG-style scopes (chevron, crosshairs)
+    self.ReticleTable = {}
+    self.ReticleTable.wdivider = 3.125
+    self.ReticleTable.hdivider = 1.7579 / self.ReticleScale
+    self.ReticleTable.x = (iScreenWidth / 2) - ((iScreenHeight / self.ReticleTable.hdivider) / 2)
+    self.ReticleTable.y = (iScreenHeight / 2) - ((iScreenHeight / self.ReticleTable.hdivider) / 2)
+    self.ReticleTable.w = iScreenHeight / self.ReticleTable.hdivider
+    self.ReticleTable.h = iScreenHeight / self.ReticleTable.hdivider
 end
 
 ----------------------------------------------------
--- Scope toggle on secondary attack
+-- Secondary Attack - Does nothing (scope handled by Think/IronSight)
+-- This prevents the toggle behavior
 ----------------------------------------------------
 function SWEP:SecondaryAttack()
+    -- Scope is handled by IronSight() in Think hook
+    -- Do nothing here to prevent interference
+end
+
+----------------------------------------------------
+-- IronSight - Called from Think hook (M9K pattern)
+-- Handles HOLD-TO-SCOPE behavior
+----------------------------------------------------
+function SWEP:IronSight()
+    if not IsValid(self) then return end
     if not IsValid(self.Owner) then return end
+    if not self.UseScope then return end
     
-    local bScope = self:GetNWBool("Scope", false)
+    local isReloading = self:GetNWBool("Reloading", false)
+    local sec = self.Secondary or {}
+    local scopeZoom = sec.ScopeZoom or self.ScopeZooms[1] or 4
     
-    if self.UseScope then
-        if bScope then
-            -- Cycle through zoom levels or exit scope
-            local numZooms = #(self.ScopeZooms or {4})
-            self.CurScopeZoom = (self.CurScopeZoom or 1) + 1
-            
-            if self.CurScopeZoom > numZooms then
-                -- Exit scope
-                self:SetNWBool("Scope", false)
-                self:SetNWBool("M9K_Ironsights", false)
-                self:SetNWFloat("ScopeZoom", 1)
-                self.CurScopeZoom = 1
-                self.Owner:SetFOV(0, 0.2)
-            else
-                -- Next zoom level
-                local newZoom = self.ScopeZooms[self.CurScopeZoom]
-                self:SetNWFloat("ScopeZoom", newZoom)
-                self.Owner:SetFOV(75 / newZoom, 0.1)
-            end
-        else
-            -- Enter scope
-            self:SetNWBool("Scope", true)
-            self:SetNWBool("M9K_Ironsights", true)
-            self.CurScopeZoom = 1
-            local zoom = self.ScopeZooms[1] or 4
-            self:SetNWFloat("ScopeZoom", zoom)
-            self.Owner:SetFOV(75 / zoom, 0.2)
-        end
-        
+    -- Handle scope entry (press right-click while not using)
+    if self.Owner:KeyPressed(IN_ATTACK2) and not self.Owner:KeyDown(IN_USE) and not isReloading then
+        self.Owner:SetFOV(75 / scopeZoom, 0.15)
+        self:SetNWBool("Scope", true)
+        self.DrawCrosshair = false
         self:EmitSound("weapons/zoom.wav", 50, 100)
-    else
-        -- Fallback to iron sights
-        local isADS = self:GetNWBool("M9K_Ironsights", false)
-        
-        if isADS then
-            self.Owner:SetFOV(0, 0.3)
-            self:SetNWBool("M9K_Ironsights", false)
-        else
-            local ironFOV = (self.Secondary and self.Secondary.IronFOV) or 55
-            self.Owner:SetFOV(ironFOV, 0.3)
-            self:SetNWBool("M9K_Ironsights", true)
+    end
+    
+    -- Handle scope exit (release right-click only)
+    if self.Owner:KeyReleased(IN_ATTACK2) then
+        if self:GetNWBool("Scope", false) then
+            self.Owner:SetFOV(0, 0.2)
+            self:SetNWBool("Scope", false)
+            self.DrawCrosshair = self.XHair
         end
     end
     
-    self:SetNextSecondaryFire(CurTime() + 0.3)
+    -- Reduce sway when scoped (works while sprinting too)
+    if self.Owner:KeyDown(IN_ATTACK2) and not self.Owner:KeyDown(IN_USE) then
+        self.SwayScale = 0.05
+        self.BobScale = 0.05
+    else
+        self.SwayScale = 1.0
+        self.BobScale = 1.0
+    end
+end
+
+----------------------------------------------------
+-- Think hook - Calls IronSight for hold-to-scope
+----------------------------------------------------
+function SWEP:Think()
+    -- Handle scope behavior
+    self:IronSight()
 end
 
 ----------------------------------------------------
@@ -172,9 +183,7 @@ function SWEP:Holster(wep)
         self.Owner:SetFOV(0, 0)
     end
     self:SetNWBool("Scope", false)
-    self:SetNWBool("M9K_Ironsights", false)
-    self:SetNWFloat("ScopeZoom", 1)
-    self.CurScopeZoom = 1
+    self.DrawCrosshair = self.XHair
     return true
 end
 
@@ -186,81 +195,124 @@ function SWEP:OnDrop()
         self.Owner:SetFOV(0, 0)
     end
     self:SetNWBool("Scope", false)
-    self:SetNWBool("M9K_Ironsights", false)
-    self:SetNWFloat("ScopeZoom", 1)
-    self.CurScopeZoom = 1
+    self.DrawCrosshair = self.XHair
 end
 
 ----------------------------------------------------
--- Draw scope overlay on client (ported from weapon_real_base_snip)
+-- Draw scope overlay on client (M9K pattern)
+-- Only draws when HOLDING right-click
 ----------------------------------------------------
 if CLIENT then
-    local SCOPEFADE_TIME = 0.4
     
     function SWEP:DrawHUD()
         if not self.UseScope then return end
+        if not IsValid(self.Owner) then return end
         
         -- Ensure scope tables are initialized
-        if not self.LensTable then
+        if not self.LensTable or not self.ReticleTable then
             self:InitScopeTables()
         end
         
-        local bScope = self:GetNWBool("Scope", false)
+        -- ONLY draw scope when holding right-click (allow sprinting while scoped)
+        local isScoped = self.Owner:KeyDown(IN_ATTACK2) 
+                         and not self.Owner:KeyDown(IN_USE)
         
-        -- Handle scope fade effect
-        if bScope ~= self.bLastScope then
-            self.bLastScope = bScope
-            self.fScopeTime = CurTime()
-        elseif bScope then
-            local fScopeZoom = self:GetNWFloat("ScopeZoom", 1)
-            if fScopeZoom ~= self.fLastScopeZoom then
-                self.fLastScopeZoom = fScopeZoom
-                self.fScopeTime = CurTime()
-            end
-        end
+        if not isScoped then return end
         
-        local fScopeTime = self.fScopeTime or 0
+        -- Get Secondary table (may be set by child weapon)
+        local sec = self.Secondary or {}
         
-        -- Draw fade-in/out black overlay
-        if fScopeTime > CurTime() - SCOPEFADE_TIME then
-            local Mul = 1 - math.Clamp((CurTime() - fScopeTime) / SCOPEFADE_TIME, 0, 1)
-            surface.SetDrawColor(0, 0, 0, 255 * Mul)
-            surface.DrawRect(0, 0, ScrW(), ScrH())
-        end
-        
-        if bScope then
-            -- Draw crosshairs
+        -- ACOG Scope (for AUG, SG552)
+        if sec.UseACOG then
+            -- Draw the ACOG lens
             surface.SetDrawColor(0, 0, 0, 255)
-            surface.DrawLine(self.CrossHairTable.x11, self.CrossHairTable.y11, self.CrossHairTable.x12, self.CrossHairTable.y12)
-            surface.DrawLine(self.CrossHairTable.x21, self.CrossHairTable.y21, self.CrossHairTable.x22, self.CrossHairTable.y22)
-            
-            -- Draw scope lens texture
-            surface.SetDrawColor(0, 0, 0, 255)
-            surface.SetTexture(surface.GetTextureID("scope/scope_normal"))
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_closedsight"))
             surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
-            
-            -- Fill in black borders (top, bottom, left, right quads)
+
+            -- Draw the CHEVRON reticle
             surface.SetDrawColor(0, 0, 0, 255)
-            surface.DrawRect(self.QuadTable.x1 - 2.5, self.QuadTable.y1 - 2.5, self.QuadTable.w1 + 5, self.QuadTable.h1 + 5)
-            surface.DrawRect(self.QuadTable.x2 - 2.5, self.QuadTable.y2 - 2.5, self.QuadTable.w2 + 5, self.QuadTable.h2 + 5)
-            surface.DrawRect(self.QuadTable.x3 - 2.5, self.QuadTable.y3 - 2.5, self.QuadTable.w3 + 5, self.QuadTable.h3 + 5)
-            surface.DrawRect(self.QuadTable.x4 - 2.5, self.QuadTable.y4 - 2.5, self.QuadTable.w4 + 5, self.QuadTable.h4 + 5)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_acogchevron"))
+            surface.DrawTexturedRect(self.ReticleTable.x, self.ReticleTable.y, self.ReticleTable.w, self.ReticleTable.h)
+
+            -- Draw the ACOG crosshair lines
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_acogcross"))
+            surface.DrawTexturedRect(self.ReticleTable.x, self.ReticleTable.y, self.ReticleTable.w, self.ReticleTable.h)
         end
+
+        -- MilDot Scope (for AWP, Scout - sniper rifles)
+        if sec.UseMilDot then
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_scopesight"))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+        end
+
+        -- SVD Scope
+        if sec.UseSVD then
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_svdsight"))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+        end
+
+        -- Parabolic Scope
+        if sec.UseParabolic then
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_parabolicsight"))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+        end
+
+        -- Elcan Scope
+        if sec.UseElcan then
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_elcanreticle"))
+            surface.DrawTexturedRect(self.ReticleTable.x, self.ReticleTable.y, self.ReticleTable.w, self.ReticleTable.h)
+            
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_elcansight"))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+        end
+
+        -- Green Duplex (night vision style)
+        if sec.UseGreenDuplex then
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_nvgilluminatedduplex"))
+            surface.DrawTexturedRect(self.ReticleTable.x, self.ReticleTable.y, self.ReticleTable.w, self.ReticleTable.h)
+
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_closedsight"))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+        end
+        
+        -- Aimpoint (red dot)
+        if sec.UseAimpoint then
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/aimpoint"))
+            surface.DrawTexturedRect(self.ReticleTable.x, self.ReticleTable.y, self.ReticleTable.w, self.ReticleTable.h)
+
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID("scope/gdcw_closedsight"))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+        end
+        
+        -- NOTE: Black border quads removed - scope textures handle their own borders
     end
     
-    -- Hide viewmodel when scoped
+    -- Hide viewmodel when scoped (holding right-click, works while sprinting)
     function SWEP:PreDrawViewModel(vm, wep, ply)
-        if self:GetNWBool("Scope", false) then
-            return true  -- Don't draw
+        if IsValid(self.Owner) and self.Owner:KeyDown(IN_ATTACK2) 
+           and not self.Owner:KeyDown(IN_USE) then
+            return true  -- Don't draw viewmodel when scoped
         end
+        return false
     end
     
-    -- Translate FOV for scope zoom
-    function SWEP:TranslateFOV(current_fov)
-        local fScopeZoom = self:GetNWFloat("ScopeZoom", 1)
-        if self:GetNWBool("Scope", false) and fScopeZoom > 1 then
-            return current_fov / fScopeZoom
+    -- Adjust mouse sensitivity when scoped
+    function SWEP:AdjustMouseSensitivity()
+        if IsValid(self.Owner) and self.Owner:KeyDown(IN_ATTACK2) then
+            local sec = self.Secondary or {}
+            local zoom = sec.ScopeZoom or self.ScopeZooms[1] or 4
+            return 1 / (zoom / 2)
         end
-        return current_fov
+        return 1
     end
 end

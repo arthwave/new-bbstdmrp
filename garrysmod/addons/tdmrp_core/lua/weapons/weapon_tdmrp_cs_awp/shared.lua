@@ -24,11 +24,17 @@ SWEP.Primary.Automatic = false
 SWEP.Primary.Ammo = "ar2"
 SWEP.Primary.NumShots = 1
 
--- Scope settings (10x zoom)
+-- Scope settings (6x zoom, MilDot sniper scope)
 SWEP.UseScope = true
-SWEP.ScopeZooms = {10}
-SWEP.ScopeScale = 0.4
+SWEP.ScopeZooms = {6}
+SWEP.ScopeScale = 0.5
+SWEP.ReticleScale = 0.6
 SWEP.IronSightZoom = 1.3
+
+-- M9K-style scope type (MilDot sniper scope)
+SWEP.Secondary = SWEP.Secondary or {}
+SWEP.Secondary.ScopeZoom = 6
+SWEP.Secondary.UseMilDot = true
 
 SWEP.IronSightsPos = Vector(-8.5, -15.0, 3.0)
 SWEP.IronSightsAng = Vector(3.0, 0, 0)

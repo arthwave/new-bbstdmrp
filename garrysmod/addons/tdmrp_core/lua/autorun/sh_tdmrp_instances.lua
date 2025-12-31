@@ -181,12 +181,13 @@ function TDMRP.ApplyInstanceToSWEP(wep, inst)
 
     wep.TDMRP_InstanceID = inst.id
 
-    -- Check if this is a new tdmrp_m9k_* weapon with mixin
+    -- Check if this is a new system weapon (tdmrp_m9k_* or weapon_tdmrp_cs_* with mixin support)
     local class = wep:GetClass()
-    local isNewSystem = string.StartWith(class, "tdmrp_m9k_") and wep.Tier ~= nil
+    local isCSSWeapon = string.StartWith(class, "weapon_tdmrp_cs_")
+    local isNewSystem = (string.StartWith(class, "tdmrp_m9k_") and wep.Tier ~= nil) or isCSSWeapon
     
-    if isNewSystem and SERVER then
-        -- New system: set tier and re-apply mixin to calculate stats from tier
+    if string.StartWith(class, "tdmrp_m9k_") and wep.Tier ~= nil and SERVER then
+        -- M9K System: set tier and re-apply mixin to calculate stats from tier
         wep.Tier = inst.tier or 1
         
         -- CRITICAL: Lock the tier so subsequent Equip() calls don't reset it
@@ -215,6 +216,27 @@ function TDMRP.ApplyInstanceToSWEP(wep, inst)
             wep:SetNWInt("TDMRP_Gem_Ruby",     inst.gems.ruby or 0)
             wep:SetNWInt("TDMRP_Gem_Diamond",  inst.gems.diamond or 0)
             TDMRP_WeaponMixin.ApplyGems(wep)
+        end
+    elseif isCSSWeapon and SERVER then
+        -- CSS System: CSS weapons don't have tier scaling, just set NWInt
+        wep.Tier = inst.tier or 1
+        wep:SetNWInt("TDMRP_Tier", inst.tier or 1)
+        
+        -- CSS weapons don't have base damage tracking, so apply stats if provided
+        if inst.stats then
+            wep:SetNWInt("TDMRP_Damage",   inst.stats.damage   or wep.Primary.Damage or 20)
+            wep:SetNWInt("TDMRP_RPM",      inst.stats.rpm      or wep.Primary.RPM or 600)
+            wep:SetNWInt("TDMRP_Accuracy", inst.stats.accuracy or 60)
+            wep:SetNWInt("TDMRP_Recoil",   inst.stats.recoil   or wep.Primary.Recoil or 25)
+            wep:SetNWInt("TDMRP_Handling", inst.stats.handling or 100)
+        end
+        
+        -- Apply gems to CSS weapons
+        if inst.gems then
+            wep:SetNWInt("TDMRP_Gem_Sapphire", inst.gems.sapphire or 0)
+            wep:SetNWInt("TDMRP_Gem_Emerald",  inst.gems.emerald or 0)
+            wep:SetNWInt("TDMRP_Gem_Ruby",     inst.gems.ruby or 0)
+            wep:SetNWInt("TDMRP_Gem_Diamond",  inst.gems.diamond or 0)
         end
     else
         -- Legacy system or client-side: use NWInts directly
