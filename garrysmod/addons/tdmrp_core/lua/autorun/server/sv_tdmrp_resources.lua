@@ -25,6 +25,33 @@ if SERVER then
     resource.AddFile("sound/tdmrp/suffixsounds/ofdoubleshot1.mp3")
     resource.AddFile("sound/tdmrp/suffixsounds/ofshrapnel.mp3")
     resource.AddFile("sound/tdmrp/suffixsounds/ofchainlightning1.mp3")
+    
+    -- Combat Voice Lines (Cop Kill Confirmed)
+    resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed1.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed2.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed3.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed4.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed5.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed6.mp3")
+    
+    -- Combat Voice Lines (Criminal Kill Confirmed)
+    resource.AddFile("sound/tdmrp/cvoice/crimkillconfirmed1.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimkillconfirmed2.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimkillconfirmed3.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimkillconfirmed4.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimkillconfirmed5.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimkillconfirmed6.mp3")
+    
+    -- Combat Voice Lines (Cop Enemy Spotted)
+    resource.AddFile("sound/tdmrp/cvoice/copenemyspotted1.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copenemyspotted2.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/copenemyspotted3.mp3")
+    
+    -- Combat Voice Lines (Criminal Enemy Spotted)
+    resource.AddFile("sound/tdmrp/cvoice/crimenemyspotted1.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimenemyspotted2.mp3")
+    resource.AddFile("sound/tdmrp/cvoice/crimenemyspotted3.mp3")
+    
     resource.AddFile("materials/suffixmat/steel_normal.vmt")
     resource.AddFile("sound/physics/metal/metal_impact_hard1.wav") 
     resource.AddFile("sound/physics/metal/metal_impact_hard2.wav")
