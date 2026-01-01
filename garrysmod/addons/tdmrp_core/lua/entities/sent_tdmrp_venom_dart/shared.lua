@@ -1,26 +1,20 @@
 ENT.Type = "anim"
 ENT.Base = "base_anim"
-ENT.PrintName = "Homing Dart"
+ENT.PrintName = "Venom Dart"
 ENT.Author = "TDMRP"
 ENT.Category = "TDMRP"
 ENT.Spawnable = false
 ENT.AdminSpawnable = false
 
-ENT.ProjectileSpeed = 1350
-ENT.LockedSpeed = 3500
-ENT.ScanRange = 600
-ENT.ScanAngle = 60
-ENT.HomingStrength = 15
-ENT.LifeTime = 4
-ENT.GlowSize = 8
-ENT.LockedGlowSize = 14
-ENT.TrailLength = 10
+-- Projectile settings
+ENT.ProjectileSpeed = 2200
+ENT.LifeTime = 3
+ENT.GlowSize = 6
+ENT.TrailLength = 8
 
 function ENT:SetupDataTables()
     self:NetworkVar("Entity", 0, "OwnerPlayer")
     self:NetworkVar("Entity", 1, "OwnerWeapon")
-    self:NetworkVar("Entity", 2, "LockedTarget")
     self:NetworkVar("Float", 0, "BaseDamage")
     self:NetworkVar("Vector", 0, "StartPos")
-    self:NetworkVar("Bool", 0, "IsLocked")
 end

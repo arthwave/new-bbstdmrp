@@ -169,6 +169,16 @@ TDMRP.Gems.Suffixes = {
         material = "Models/effects/comball_tape",  -- Energy/explosive material
         ammoCost = 1,           -- Normal ammo cost
         
+        -- Hook: Play layered fire sound
+        OnPreFire = function(wep)
+            if SERVER then
+                local owner = wep:GetOwner()
+                if IsValid(owner) then
+                    sound.Play("tdmrp/suffixsounds/ofmomentum.mp3", owner:GetPos(), 80, math.random(95, 105), 0.9)
+                end
+            end
+        end,
+        
         -- Hook: Apply knockback on hit
         OnBulletHit = function(wep, tr, dmginfo)
             if not SERVER then return end
@@ -233,21 +243,22 @@ TDMRP.Gems.Suffixes = {
         explosionDamage = 25,
         
         -- Emit Frost sound as a layer (plays on top of default weapon sound)
+        -- NOTE: Use sound.Play() at player position instead of wep:EmitSound() to avoid audio clipping issues
         OnPreFire = function(wep)
-            if not wep.TDMRP_FrostSoundIndex then
-                wep.TDMRP_FrostSoundIndex = 0
-            end
-            wep.TDMRP_FrostSoundIndex = (wep.TDMRP_FrostSoundIndex % 3) + 1
-            local soundIdx = wep.TDMRP_FrostSoundIndex
-            local frostSound = "tdmrp/suffixsounds/offrost" .. soundIdx .. ".mp3"
-            
-            -- Emit Frost sound to layer with default weapon sound
-            local wepEnt = wep
-            timer.Simple(0.01, function()
-                if IsValid(wepEnt) then
-                    wepEnt:EmitSound(frostSound, 75, 100, 1.0)
+            if SERVER then
+                local owner = wep:GetOwner()
+                if not IsValid(owner) then return end
+                
+                if not wep.TDMRP_FrostSoundIndex then
+                    wep.TDMRP_FrostSoundIndex = 0
                 end
-            end)
+                wep.TDMRP_FrostSoundIndex = (wep.TDMRP_FrostSoundIndex % 3) + 1
+                local soundIdx = wep.TDMRP_FrostSoundIndex
+                local frostSound = "tdmrp/suffixsounds/offrost" .. soundIdx .. ".mp3"
+                
+                -- Use sound.Play at player position for reliable layered audio
+                sound.Play(frostSound, owner:GetPos(), 85, 100, 1.0)
+            end
         end,
         
         -- Hook: Send icicle beam(s) to all clients (muzzle to impact)
@@ -649,7 +660,7 @@ TDMRP.Gems.Suffixes = {
             rpm = -0.25,
             handling = -0.10,
         },
-        material = "models/props_lab/warp_sheet",
+        material = "phoenix_storms/top",
         ammoCost = 1,
         projectileWeapon = true,
         OnPreFire = function(wep)
@@ -666,6 +677,31 @@ TDMRP.Gems.Suffixes = {
                     print("[TDMRP Homing] ERROR: TDMRP.Homing.FireFromWeapon not found!")
                     print("[TDMRP Homing] TDMRP exists: " .. tostring(TDMRP ~= nil))
                     print("[TDMRP Homing] TDMRP.Homing exists: " .. tostring(TDMRP and TDMRP.Homing ~= nil))
+                end
+            end
+        end,
+        OnPostFire = function(wep)
+            wep.TDMRP_BlockHitscan = false
+        end,
+    },
+    
+    of_Venom = {
+        name = "of Venom",
+        effect = "venom",
+        description = "Fires poison darts that stack venom DoT (5 dmg/tick, max 3 stacks, 5s duration)",
+        stats = {
+            damage = -0.35,
+            handling = -0.05,
+        },
+        material = "phoenix_storms/pack2/interior_sides",
+        projectileWeapon = true,
+        OnPreFire = function(wep)
+            wep.TDMRP_BlockHitscan = true
+        end,
+        OnBulletFired = function(wep)
+            if SERVER then
+                if TDMRP and TDMRP.Venom and TDMRP.Venom.FireFromWeapon then
+                    TDMRP.Venom.FireFromWeapon(wep)
                 end
             end
         end,

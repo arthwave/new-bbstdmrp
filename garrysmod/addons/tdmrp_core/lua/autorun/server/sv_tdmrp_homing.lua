@@ -73,22 +73,23 @@ function TDMRP.Homing.FireFromWeapon(wep)
     local numPellets = wep.Primary and wep.Primary.NumShots or 1
     local isShotgun = numPellets and numPellets > 1
     
-    -- Play ORIGINAL gun sound first
+    -- Play ORIGINAL gun sound first (M9K already plays this, but ensure it plays)
     if wep.Primary and wep.Primary.Sound then
         wep:EmitSound(wep.Primary.Sound, 75, math.random(98, 102), 0.9)
     elseif wep.ShootSound then
         wep:EmitSound(wep.ShootSound, 75, math.random(98, 102), 0.9)
     end
     
-    -- Layer the homing dart sound on top
+    -- Layer the homing dart sound on top using sound.Play for reliability
     local fireSounds = {
         "tdmrp/suffixsounds/ofhoming1.mp3",
         "tdmrp/suffixsounds/ofhoming2.mp3"
     }
-    wep:EmitSound(fireSounds[math.random(1, 2)], 80, math.random(95, 105), 1.0)
+    local chosenSound = fireSounds[math.random(1, 2)]
+    sound.Play(chosenSound, owner:GetPos(), 85, math.random(95, 105), 1.0)
     
     if isShotgun then
-        local dartCount = math.min(numPellets, 4)
+        local dartCount = numPellets
         local spreadBase = wep.Primary and wep.Primary.Spread or 0.05
         
         for i = 1, dartCount do

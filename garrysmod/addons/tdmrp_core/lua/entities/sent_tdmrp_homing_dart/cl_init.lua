@@ -1,106 +1,121 @@
--- sent_tdmrp_homing_dart/cl_init.lua
--- Homing suffix projectile - client-side rendering
-
 include("shared.lua")
 
-local glowMaterial = Material("sprites/light_glow02_add")
-local beamMaterial = Material("trails/laser")
+local GLOW_COLOR = Color(255, 50, 50, 200)
+local TRAIL_COLOR = Color(255, 80, 80, 150)
 
 function ENT:Initialize()
     self.TrailPositions = {}
-    self.LastPos = self:GetPos()
-    self.ParticleNextTime = 0
+    self.MaxTrailPositions = 10
+    self.LastTrailTime = 0
+    self.TrailInterval = 0.02
 end
 
 function ENT:Draw()
-    -- Don't draw the model, draw custom visuals instead
-    self:DrawGlow()
-    self:DrawTracer()
-    self:SpawnParticles()
+    self:DrawModel()
 end
 
-function ENT:DrawGlow()
+function ENT:DrawTranslucent()
     local pos = self:GetPos()
-    local isLocked = self:GetIsLocked()
+    local dir = self:GetVelocity():GetNormalized()
     
-    -- Color and size based on lock state
-    local glowColor = isLocked and Color(255, 50, 50, 255) or Color(255, 100, 100, 255)
-    local glowSize = isLocked and self.LockedGlowSize or self.GlowSize
-    
-    -- Pulsing effect when locked
-    if isLocked then
-        local pulse = math.sin(CurTime() * 15) * 0.3 + 1
-        glowSize = glowSize * pulse
-    end
-    
-    render.SetMaterial(glowMaterial)
-    render.DrawSprite(pos, glowSize * 2, glowSize * 2, glowColor)
-    
-    -- Inner brighter core
-    local coreColor = isLocked and Color(255, 200, 200, 255) or Color(255, 150, 150, 255)
-    render.DrawSprite(pos, glowSize, glowSize, coreColor)
+    self:DrawGlow(pos)
+    self:DrawTracer(pos, dir)
+    self:DrawTrail(pos)
 end
 
-function ENT:DrawTracer()
-    local curPos = self:GetPos()
-    local isLocked = self:GetIsLocked()
+function ENT:DrawGlow(pos)
+    local size = self:GetIsLocked() and 20 or 14
+    local pulseSize = size + math.sin(CurTime() * 15) * 3
     
-    -- Store trail positions
-    table.insert(self.TrailPositions, 1, curPos)
-    if #self.TrailPositions > self.TrailLength then
-        table.remove(self.TrailPositions)
+    render.SetMaterial(Material("sprites/light_glow02_add"))
+    render.DrawSprite(pos, pulseSize, pulseSize, GLOW_COLOR)
+    
+    local coreColor = Color(255, 150, 150, 255)
+    render.DrawSprite(pos, pulseSize * 0.4, pulseSize * 0.4, coreColor)
+end
+
+function ENT:DrawTracer(pos, dir)
+    local tracerLength = 60
+    local startPos = pos - dir * tracerLength
+    
+    render.SetMaterial(Material("effects/laser1"))
+    render.DrawBeam(startPos, pos, 4, 0, 1, GLOW_COLOR)
+    
+    render.SetMaterial(Material("sprites/physbeam"))
+    render.DrawBeam(startPos, pos, 2, 0, 1, Color(255, 200, 200, 255))
+end
+
+function ENT:DrawTrail(pos)
+    if CurTime() - self.LastTrailTime > self.TrailInterval then
+        self.LastTrailTime = CurTime()
+        table.insert(self.TrailPositions, 1, {pos = pos, time = CurTime()})
+        
+        while #self.TrailPositions > self.MaxTrailPositions do
+            table.remove(self.TrailPositions)
+        end
     end
     
-    -- Trail color - brighter red when locked
-    local trailColor = isLocked and Color(255, 50, 50, 255) or Color(255, 80, 80, 200)
+    if #self.TrailPositions < 2 then return end
     
-    render.SetMaterial(beamMaterial)
+    render.SetMaterial(Material("sprites/light_glow02_add"))
     
-    -- Draw trail segments
     for i = 1, #self.TrailPositions - 1 do
         local p1 = self.TrailPositions[i]
         local p2 = self.TrailPositions[i + 1]
         
-        local alpha = 255 * (1 - (i / #self.TrailPositions))
-        local width = 3 * (1 - (i / #self.TrailPositions))
+        local alpha1 = 255 * (1 - (i - 1) / self.MaxTrailPositions)
+        local alpha2 = 255 * (1 - i / self.MaxTrailPositions)
+        local size1 = 8 * (1 - (i - 1) / self.MaxTrailPositions)
+        local size2 = 8 * (1 - i / self.MaxTrailPositions)
         
-        if isLocked then
-            width = width * 1.5  -- Thicker trail when locked
-        end
-        
-        render.DrawBeam(p1, p2, width, 0, 1, Color(trailColor.r, trailColor.g, trailColor.b, alpha))
+        render.DrawSprite(p1.pos, size1, size1, Color(255, 80, 80, alpha1))
     end
-    
-    self.LastPos = curPos
-end
-
-function ENT:SpawnParticles()
-    if CurTime() < self.ParticleNextTime then return end
-    self.ParticleNextTime = CurTime() + 0.02
-    
-    local pos = self:GetPos()
-    local isLocked = self:GetIsLocked()
-    
-    local emitter = ParticleEmitter(pos)
-    if not emitter then return end
-    
-    -- Small red particle trail
-    local particle = emitter:Add("effects/spark", pos)
-    if particle then
-        particle:SetVelocity(VectorRand() * 20)
-        particle:SetLifeTime(0)
-        particle:SetDieTime(isLocked and 0.15 or 0.1)
-        particle:SetStartAlpha(isLocked and 255 or 180)
-        particle:SetEndAlpha(0)
-        particle:SetStartSize(isLocked and 3 or 2)
-        particle:SetEndSize(0)
-        particle:SetColor(255, isLocked and 50 or 100, isLocked and 50 or 100)
-        particle:SetGravity(Vector(0, 0, 0))
-    end
-    
-    emitter:Finish()
 end
 
 function ENT:Think()
-    -- Client-side think for smooth visuals
+    local emitter = ParticleEmitter(self:GetPos())
+    if emitter then
+        local particle = emitter:Add("particles/smokey", self:GetPos())
+        if particle then
+            particle:SetVelocity(VectorRand() * 10)
+            particle:SetLifeTime(0)
+            particle:SetDieTime(0.3)
+            particle:SetStartAlpha(100)
+            particle:SetEndAlpha(0)
+            particle:SetStartSize(3)
+            particle:SetEndSize(1)
+            particle:SetColor(255, 100, 100)
+            particle:SetGravity(Vector(0, 0, 0))
+        end
+        emitter:Finish()
+    end
 end
+
+net.Receive("TDMRP_HomingImpact", function()
+    local pos = net.ReadVector()
+    
+    local effectData = EffectData()
+    effectData:SetOrigin(pos)
+    effectData:SetMagnitude(2)
+    effectData:SetScale(1)
+    util.Effect("BloodImpact", effectData)
+    
+    local emitter = ParticleEmitter(pos)
+    if emitter then
+        for i = 1, 8 do
+            local particle = emitter:Add("effects/spark", pos)
+            if particle then
+                particle:SetVelocity(VectorRand() * 150)
+                particle:SetLifeTime(0)
+                particle:SetDieTime(0.4)
+                particle:SetStartAlpha(255)
+                particle:SetEndAlpha(0)
+                particle:SetStartSize(4)
+                particle:SetEndSize(1)
+                particle:SetColor(255, 80, 80)
+                particle:SetGravity(Vector(0, 0, -200))
+            end
+        end
+        emitter:Finish()
+    end
+end)
