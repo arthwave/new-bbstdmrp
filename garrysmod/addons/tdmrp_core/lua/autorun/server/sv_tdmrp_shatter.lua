@@ -75,12 +75,13 @@ function TDMRP.Shatter.FireFromWeapon(wep)
         wep:EmitSound(wep.ShootSound, 75, math.random(98, 102), 0.9)
     end
     
-    -- Layer the shatter rock sound on top
+    -- Layer the shatter rock sound using sound.Play for reliability
     local fireSounds = {
         "tdmrp/suffixsounds/ofshatter1.mp3",
         "tdmrp/suffixsounds/ofshatter2.mp3"
     }
-    wep:EmitSound(fireSounds[math.random(1, 2)], 80, math.random(95, 105), 1.0)
+    local chosenSound = fireSounds[math.random(1, 2)]
+    sound.Play(chosenSound, owner:GetPos(), 85, math.random(95, 105), 1.0)
     
     if isShotgun then
         -- Spawn multiple rocks for shotgun

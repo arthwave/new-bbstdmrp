@@ -48,6 +48,10 @@ if SERVER then
     resource.AddFile("sound/tdmrp/suffixsounds/ofhoming2.mp3")
     -- (Manhack sounds are built-in HL2: mh_engine_loop1.wav, mh_blade_snick1.wav, grind_flesh1/2.wav)
     
+    -- Chrome Suffix Sounds
+    resource.AddFile("sound/tdmrp/suffixsounds/ofchrome1.mp3")
+    resource.AddFile("sound/tdmrp/suffixsounds/ofchrome2.mp3")
+    
     -- Combat Voice Lines (Cop Kill Confirmed)
     resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed1.mp3")
     resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed2.mp3")

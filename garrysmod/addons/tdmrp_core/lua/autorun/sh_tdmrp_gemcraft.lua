@@ -709,6 +709,128 @@ TDMRP.Gems.Suffixes = {
             wep.TDMRP_BlockHitscan = false
         end,
     },
+    
+    of_Chrome = {
+        name = "of Chrome",
+        effect = "chrome",
+        description = "Deals % of target's max health as damage. Ignores headshots, DT reduced by 50%.",
+        stats = {
+            -- No base stat changes - damage is recalculated as % HP
+            rpm = -0.10,        -- Slight RPM reduction
+            handling = -0.05,   -- Minor handling penalty
+        },
+        material = "phoenix_storms/mat/mat_phx_metallic",
+        isChrome = true,  -- Flag for HUD to show % HP damage
+        
+        -- Chrome tier scaling multipliers
+        tierScaling = {
+            [1] = 0.90,   -- Common: 90%
+            [2] = 0.95,   -- Uncommon: 95%
+            [3] = 1.00,   -- Rare: 100% (baseline)
+            [4] = 1.10,   -- Legendary: 110%
+            [5] = 1.15,   -- Unique: 115%
+        },
+        
+        -- Shotgun buckshot falloff config
+        buckshotFalloffStart = 100,   -- Full damage up to 100 units
+        buckshotFalloffEnd = 200,     -- Reduced to 25% at 200+ units
+        buckshotFalloffMin = 0.25,    -- Minimum 25% damage beyond falloff
+        
+        -- Play Chrome sound on fire (alternating)
+        OnPreFire = function(wep)
+            if SERVER then
+                local owner = wep:GetOwner()
+                if not IsValid(owner) then return end
+                
+                -- Alternate between sound 1 and 2
+                wep.TDMRP_ChromeSoundIndex = (wep.TDMRP_ChromeSoundIndex or 0) + 1
+                local soundIdx = ((wep.TDMRP_ChromeSoundIndex - 1) % 2) + 1
+                local chromeSound = "tdmrp/suffixsounds/ofchrome" .. soundIdx .. ".mp3"
+                
+                sound.Play(chromeSound, owner:GetPos(), 85, math.random(95, 105), 1.0)
+            end
+        end,
+        
+        -- Override damage calculation on bullet hit
+        OnBulletHit = function(wep, tr, dmginfo)
+            if not SERVER then return end
+            
+            local target = tr.Entity
+            if not IsValid(target) then return end
+            if not (target:IsPlayer() or target:IsNPC()) then return end
+            
+            local owner = wep:GetOwner()
+            if not IsValid(owner) then return end
+            
+            -- Team check for players
+            if target:IsPlayer() and target:Team() == owner:Team() then return end
+            
+            -- Get target's max health (cap NPCs at 200)
+            local maxHP = target:GetMaxHealth()
+            if target:IsNPC() then
+                maxHP = math.min(maxHP, 200)
+            end
+            
+            -- Get weapon's current damage (includes prefix modifiers)
+            local baseDamage = dmginfo:GetDamage()
+            
+            -- Calculate % HP damage (damage / 2 = % of max HP)
+            local percentHP = baseDamage / 2
+            
+            -- Get tier scaling
+            local tier = wep:GetNWInt("TDMRP_Tier", 1)
+            local suffix = TDMRP.Gems.Suffixes.of_Chrome
+            local tierMult = suffix.tierScaling[tier] or 1.0
+            
+            -- Apply tier scaling
+            percentHP = percentHP * tierMult
+            
+            -- Check if shotgun buckshot mode for falloff
+            local numShots = wep.Primary and wep.Primary.NumShots or 1
+            local shotgunMode = wep:GetNWInt("TDMRP_ShotgunMode", 0)
+            local isBuckshot = numShots > 1 and shotgunMode ~= 1
+            
+            if isBuckshot then
+                -- Apply shotgun buckshot falloff
+                local distance = tr.StartPos:Distance(tr.HitPos)
+                local falloffMult = 1.0
+                
+                if distance > suffix.buckshotFalloffStart then
+                    if distance >= suffix.buckshotFalloffEnd then
+                        falloffMult = suffix.buckshotFalloffMin
+                    else
+                        -- Gradual falloff between 100-200 units
+                        local falloffRange = suffix.buckshotFalloffEnd - suffix.buckshotFalloffStart
+                        local falloffProgress = (distance - suffix.buckshotFalloffStart) / falloffRange
+                        falloffMult = 1.0 - (falloffProgress * (1.0 - suffix.buckshotFalloffMin))
+                    end
+                end
+                
+                percentHP = percentHP * falloffMult
+            end
+            
+            -- Calculate final damage
+            local finalDamage = maxHP * (percentHP / 100)
+            
+            -- Apply DT reduction (Chrome reduces DT effectiveness by 50%)
+            -- We set the damage, and the DT system will process it later
+            -- So we need to pre-compensate: if target has DT, we add 50% of what DT would block
+            if target:IsPlayer() then
+                local dt = target:GetNWInt("TDMRP_DT", 0)
+                if dt > 0 then
+                    -- DT normally blocks 'dt' damage flat
+                    -- Chrome makes DT only 50% effective, so we add back 50% of blocked damage
+                    local dtBlocked = math.min(dt, finalDamage)
+                    local dtBypass = dtBlocked * 0.5
+                    finalDamage = finalDamage + dtBypass
+                end
+            end
+            
+            -- Set the modified damage (ignores headshot multiplier by replacing damage entirely)
+            dmginfo:SetDamage(finalDamage)
+            dmginfo:SetDamageType(DMG_GENERIC)  -- Remove bullet type to avoid headshot bonus
+        end,
+    },
 }
 
 print("[TDMRP GemCraft] Gem definitions loaded. Prefixes: " .. table.Count(TDMRP.Gems.Prefixes) .. " (shared), Suffixes: " .. table.Count(TDMRP.Gems.Suffixes) .. " (unified tier)")

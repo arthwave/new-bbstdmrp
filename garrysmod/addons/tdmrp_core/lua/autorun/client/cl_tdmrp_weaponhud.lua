@@ -398,7 +398,40 @@ hook.Add("HUDPaint", "TDMRP_WeaponHUD", function()
     local isShotgun = TDMRP.Accuracy and TDMRP.Accuracy.GetWeaponType and TDMRP.Accuracy.GetWeaponType(wep) == "shotgun"
     local damageDisplay = tostring(damage)
     
-    if isShotgun and wep.Primary and wep.Primary.NumShots then
+    -- Check for Chrome suffix - displays % HP instead of flat damage
+    local suffixId = wep:GetNWString("TDMRP_SuffixID", "")
+    local isChrome = suffixId == "of_Chrome"
+    
+    if isChrome then
+        -- Chrome damage display: damage / 2 = % HP with tier scaling
+        local chromePercent = damage / 2
+        
+        -- Apply tier scaling
+        local chromeTierScaling = {
+            [1] = 0.90, [2] = 0.95, [3] = 1.00, [4] = 1.10, [5] = 1.15
+        }
+        local tierMult = chromeTierScaling[tier] or 1.0
+        chromePercent = chromePercent * tierMult
+        
+        if isShotgun and wep.Primary and wep.Primary.NumShots then
+            local numPellets = wep.Primary.NumShots
+            local mode = wep:GetNWInt("TDMRP_ShotgunMode", 0)
+            if mode == 1 then
+                -- Slug mode: single projectile, show total % HP
+                local slugDamage = damage * numPellets  -- Slug uses combined damage
+                local slugPercent = math.Round((slugDamage / 2) * tierMult)
+                damageDisplay = slugPercent .. "% HP"
+            else
+                -- Buckshot: show per-pellet % and total
+                local perPelletPercent = math.Round(chromePercent)
+                local totalPercent = math.Round(chromePercent * numPellets)
+                damageDisplay = perPelletPercent .. "%x" .. numPellets .. "=" .. totalPercent .. "% HP"
+            end
+        else
+            -- Non-shotgun: simple % HP display
+            damageDisplay = math.Round(chromePercent) .. "% HP"
+        end
+    elseif isShotgun and wep.Primary and wep.Primary.NumShots then
         local numPellets = wep.Primary.NumShots
         local totalDamage = damage * numPellets
         local mode = wep:GetNWInt("TDMRP_ShotgunMode", 0)
@@ -411,9 +444,8 @@ hook.Add("HUDPaint", "TDMRP_WeaponHUD", function()
         end
     end
     
-    -- Add doubleshot indicator if applicable
-    local suffixId = wep:GetNWString("TDMRP_SuffixID", "")
-    if suffixId == "of_Doubleshot" then
+    -- Add doubleshot indicator if applicable (not for Chrome)
+    if suffixId == "of_Doubleshot" and not isChrome then
         damageDisplay = damageDisplay .. " ×2"  -- Show 2x indicator for doubleshot
     end
     

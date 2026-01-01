@@ -146,7 +146,9 @@ function TDMRP.Venom.FireFromWeapon(wep)
         end
     else
         local aimDir = owner:GetAimVector()
-        local spread = 0.003
+        -- Respect weapon's actual spread (with slight accuracy buff for venom)
+        local baseSpread = wep.Primary and wep.Primary.Spread or 0.02
+        local spread = baseSpread * 0.7  -- 30% accuracy buff for venom darts
         local spreadX = math.Rand(-spread, spread)
         local spreadY = math.Rand(-spread, spread)
         
