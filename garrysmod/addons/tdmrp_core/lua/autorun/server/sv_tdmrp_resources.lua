@@ -50,7 +50,6 @@ if SERVER then
     
     -- Chrome Suffix Sounds
     resource.AddFile("sound/tdmrp/suffixsounds/ofchrome1.mp3")
-    resource.AddFile("sound/tdmrp/suffixsounds/ofchrome2.mp3")
     
     -- Combat Voice Lines (Cop Kill Confirmed)
     resource.AddFile("sound/tdmrp/cvoice/copkillconfirmed1.mp3")

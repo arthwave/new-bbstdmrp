@@ -736,18 +736,14 @@ TDMRP.Gems.Suffixes = {
         buckshotFalloffEnd = 200,     -- Reduced to 25% at 200+ units
         buckshotFalloffMin = 0.25,    -- Minimum 25% damage beyond falloff
         
-        -- Play Chrome sound on fire (alternating)
+        -- Play Chrome sound on fire with ±10% pitch variance
         OnPreFire = function(wep)
             if SERVER then
                 local owner = wep:GetOwner()
                 if not IsValid(owner) then return end
                 
-                -- Alternate between sound 1 and 2
-                wep.TDMRP_ChromeSoundIndex = (wep.TDMRP_ChromeSoundIndex or 0) + 1
-                local soundIdx = ((wep.TDMRP_ChromeSoundIndex - 1) % 2) + 1
-                local chromeSound = "tdmrp/suffixsounds/ofchrome" .. soundIdx .. ".mp3"
-                
-                sound.Play(chromeSound, owner:GetPos(), 85, math.random(95, 105), 1.0)
+                local pitch = 100 + math.random(-10, 10)
+                sound.Play("tdmrp/suffixsounds/ofchrome1.mp3", owner:GetPos(), 85, pitch, 1.0)
             end
         end,
         
